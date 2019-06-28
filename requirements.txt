@@ -1,0 +1,3 @@
+numpy>=1.13.0
+chemdata>=1.3.0
+chardet>=3.0.4
