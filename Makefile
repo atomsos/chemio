@@ -8,7 +8,7 @@ all:
 
 
 build:
-	rm -rf build/ sdist/ dist/ atomtools-*/ atomtools.egg-info/
+	rm -rf build/ sdist/ dist/ gsio-*/ gsio.egg-info/
 	python setup.py sdist build
 	python setup.py bdist_wheel --universal
 	twine check dist/*
@@ -20,11 +20,11 @@ travisinstall:
 	python setup.py install
 
 test:
-	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source atomtools ./tests/test.py" 
-	echo `which atomtools`
-	# coverage run --source atomtools `which atomtools` -h
-	# coverage run --source atomtools `which atomtools` LISTSUBCOMMAND
-	# coverage run --source atomtools `which atomtools` LISTSUBCOMMAND | xargs -n 1 -I [] bash -c '(coverage run --source atomtools `which atomtools` [] -h >/dev/null 2>&1 || echo ERROR: [])'
+	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source gsio ./tests/test.py" 
+	echo `which gsio`
+	# coverage run --source gsio `which gsio` -h
+	# coverage run --source gsio `which gsio` LISTSUBCOMMAND
+	# coverage run --source gsio `which gsio` LISTSUBCOMMAND | xargs -n 1 -I [] bash -c '(coverage run --source gsio `which gsio` [] -h >/dev/null 2>&1 || echo ERROR: [])'
 	coverage report -m
 
 test_env:

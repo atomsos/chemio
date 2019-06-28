@@ -6,13 +6,13 @@ from setuptools import setup, find_packages
 def get_version():
     import sys
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-    import atomtools
-    return atomtools.__version__
+    import gsio
+    return gsio.__version__
 
 
 if __name__ == '__main__':
     setup(
-        name='atomtools',
+        name='gsio',
         version=get_version(),
         description=(
             'basic atom tools collection'
@@ -26,7 +26,7 @@ if __name__ == '__main__':
         license='MIT License',
         packages=find_packages(),
         platforms=["Linux", "Darwin"],
-        url='https://github.com/atomse/atomtools',
+        url='https://github.com/atomse/gsio',
         python_requires='>=3',
         classifiers=[
             'Development Status :: 4 - Beta',
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         install_requires=open('requirements.txt').read().split(),
         entry_points={
             "console_scripts": [
-                "atomtools=atomtools.cli:run_atomtools_cli",
+                "gsio=gsio.cli:run_gsio_cli",
             ],
         },
         extras_require={
