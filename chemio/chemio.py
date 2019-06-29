@@ -28,18 +28,33 @@ SUPPORT_READ_EXTENSIONS = CONF.get("default", "support_read_extensions").strip()
 SUPPORT_WRITE_FORMATS = CONF.get("default", "support_write_formats").strip().split()
 compression = atomtools.file.compress_command
 
+def select_server(servers=SERVER_URL):
+    if isinstance(servers, str):
+        servers = servers.strip().split()
+    if len(servers) == 1:
+        return servers[0]
+    for server in servers:
+        try:
+            requests.get(server)
+            return server
+        except:
+            pass
+    raise ValueError("All servers are not available")
 
-def get_response(iotype, filename, data=None):
+
+def get_response(iotype, filename, data=None, server=None):
+    server = server or select_server()
     data = data or dict()
     data['iotype'] = iotype
     if iotype == 'read':
         files = {'file' : open(filename, 'rb')}
     else:
         files = None
-    res = requests.post(SERVER_URL, files=files, data=data)
+    res = requests.post(server, files=files, data=data)
+    print(res.text, res.request.body)
     return res.text
 
-def read(filename, index=-1):
+def read(filename, index=-1, server=None):
     assert os.path.exists(filename)
     assert isinstance(index, int) or isinstance(index, str) and re.match('^[+-:0-9]$', index)
     extension = os.path.splitext(filename)[-1]
@@ -49,11 +64,11 @@ def read(filename, index=-1):
     if not extension:
         extension = os.path.basename(filename)
     assert extension in SUPPORT_READ_EXTENSIONS, filename + ' not support'
-    output = get_response('read', filename, {'index': index})
+    output = get_response('read', filename, {'index': index}, server=server)
     return json_tricks.loads(output)
 
 
-def get_write_content(arrays, filename=None, format=None):
+def get_write_content(arrays, filename=None, format=None, server=None):
     data = dict()
     if filename:
         data['filename'] = filename
@@ -61,30 +76,19 @@ def get_write_content(arrays, filename=None, format=None):
         assert format is not None, 'format cannot be none when filename is None'
         data['format'] =  format
     data.update({'arrays' : json_tricks.dumps(arrays)})
-    return get_response('write', None, data=data)
+    return get_response('write', None, data=data, server=server)
 
 
-def write(arrays, filename, format=None):
-    output = get_write_content(arrays, filename=filename, format=format)
+def write(arrays, filename, format=None, server=None):
+    output = get_write_content(arrays, filename=filename, format=format, server=server)
     with open(filename, 'w') as fd:
         fd.write(output)
 
 
-def preview(arrays, format='xyz'):
-    output = get_write_content(arrays, format=format)
+def preview(arrays, format='xyz', server=None):
+    output = get_write_content(arrays, format=format, server=server)
     print('----start----')
     print(re.findall('<body>([\s\S]*?)</body>', output)[0], end='')
     print('----end------')
 
 
-def test():
-    arrays = read('test.xyz')
-    print(arrays)
-    arrays = read('POSCAR')
-    print(arrays)
-    for _format in SUPPORT_WRITE_FORMATS:
-        print(_format)
-        preview(arrays, _format)
-
-if __name__ == '__main__':
-    test()
