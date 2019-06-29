@@ -1,0 +1,27 @@
+    Properties=species:S:1:pos:R:3 pbc="F F F";;;;;
+1.00000
+8.599148 0. 0.
+0. 9.92944 0.
+0. 0. 0.0
+C H
+6 6
+Selective Dynamics
+Cartesian
+4.299574  6.359968  0.0  False  False  False
+5.507894  5.662344  0.0  False  False  False
+5.507894  4.267096  0.0  False  False  False
+4.299574  3.5694719999999998  0.0  False  False  False
+3.0912539999999997  4.267096  0.0  False  False  False
+3.0912539999999997  5.662344  0.0  False  False  False
+4.299574  7.44708  0.0  False  False  False
+6.449361  6.2059  0.0  False  False  False
+6.449361  3.72354  0.0  False  False  False
+4.299574  2.48236  0.0  False  False  False
+2.149787  3.72354  0.0  False  False  False
+2.149787  6.2059  0.0  False  False  False
+
+
+
+
+
+

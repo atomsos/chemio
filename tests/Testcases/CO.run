@@ -1,0 +1,85 @@
+$ADFBIN/adf -n 8 << eor 1>${0/run/out} 2>${0/run/err}
+TITLE CO
+
+UNITS
+    length Angstrom
+    angle  Degree
+END
+
+BASIS
+Pa ZORA/TZP/Pa.4f
+!N /home/scicons/adf2017.113/atomicdata/ZORA/TZ2P/N.1s
+H ZORA/TZ2P/H
+C ZORA/TZ2P/C.1s
+O ZORA/TZ2P/O.1s
+!As/home/scicons/adf2017.113/atomicdata/ZORA/TZ2P/As.3p
+!P ZORA/TZ2P/P.2p
+END
+
+RELATIVISTIC SCALAR ZORA
+
+xc
+GGA PBE
+END
+
+
+!Dependecy
+
+ATOMS  
+  Pa        0.000000    0.000000   -1.285436
+  Pa        0.000000    0.000000    1.285436
+  C         0.000000    0.000000   -3.517015
+  C         0.000000    0.000000    3.517015
+  O         0.000000    0.000000   -4.707502
+  O         0.000000    0.000000    4.707502 
+END
+   
+  ! OCCUPATIONS smearq=0.01
+  !OCCUPATIONS
+  !E1 30 // 29
+  !A1 15 // 15
+  !A2 1 // 1
+  !End
+   
+CHARGE 0 4
+
+UNRESTRICTED 
+
+GEOMETRY
+   optim all
+     iterations 500
+   hessupd BFGS
+   converge e=1.0e-3 grad=0.5e-2 rad=1.0e-2 angle=0.5
+END
+   
+AnalyticalFreq
+MAX_CPKS_iterations 200
+End
+
+SAVE  TAPE21
+
+BONDORDER printall
+
+EXTENDEDPOPAN
+
+SYMMETRY NOSYM
+ 
+SCF
+iterations 300
+converge 1.0e-6 1.0e-6
+mixing 0.02
+lshift 0.0
+diis n=300 ok=0.0001 cyc=300 cx=5.0 cxx=10.0
+END
+INTEGRATION 6.0 6.0 6.0
+
+A1FIT 10.0
+end input
+eor
+
+echo "SCM_MACHINEFILE: $SCM_MACHINEFILE" >>logfile
+mv logfile ${0/run/log}
+mv TAPE21 ${0/run/t21}
+rm -f t21.*
+
+

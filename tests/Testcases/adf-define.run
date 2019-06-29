@@ -1,0 +1,71 @@
+#!/bin/sh
+
+
+$ADFBIN/adf  << eor
+TITLE  HgMeBr, scalar, ZORA
+
+Define
+ ZERO = 0.0
+ R1 = 2.406
+ R2 = 2.074
+ R3 = 1.100
+ ALPHA = 108.215
+ X1 = ZERO
+ Y1 = ZERO
+ Z1 = ZERO
+ X2 = ZERO
+ Y2 = ZERO
+ Z2 = -R1
+ X3 = ZERO
+ Y3 = ZERO
+ Z3 = R2
+ X4 = SQRT(6)*(R3/3)*sqrt(1-cos(ALPHA))
+ Y4 = ZERO
+ Z4 = R2+sqrt(3)*(R3/3)*sqrt(1+(2*cos(ALPHA)))
+ X5 = -sqrt(6)*(R3/6)*sqrt(1-cos(ALPHA))
+ Y5 = sqrt(2)*(R3/2)*sqrt(1-cos(ALPHA))
+ Z5 = R2+sqrt(3)*(R3/3)*sqrt(1+(2*cos(ALPHA)))
+ X6 = -sqrt(6)*(R3/6)*sqrt(1-cos(ALPHA))
+ Y6 = -sqrt(2)*(R3/2)*sqrt(1-cos(ALPHA))
+ Z6 = R2+sqrt(3)*(R3/3)*sqrt(1+(2*cos(ALPHA)))
+End
+
+Atoms
+ Hg X1 Y1 Z1
+ Br X2 Y2 Z2*1
+ C  X3 Y3 Z3/2*2
+ H  X4 Y4 Z4
+ H  X5 Y5 Z5
+ H  X6 Y6 Z6
+End
+
+Basis
+ Type DZ
+ Core None
+End
+
+XC
+ GGA PW91
+End
+
+NumericalQuality Good
+
+Relativistic  Scalar  ZORA
+
+SAVE TAPE10
+
+End Input
+eor
+
+rm -f t12.rel 
+
+
+$ADFBIN/nmr  <<  eor
+NMR
+  U1K BEST
+  NUC 1 3
+END
+eor
+mv TAPE21 HgMeBr.t21
+<filename>/home/scicons/software/adf2014.04/examples/adf/HgMeBr_zsc/HgMeBr_zsc.run</filename>
+<hostname>mu01.local</hostname>

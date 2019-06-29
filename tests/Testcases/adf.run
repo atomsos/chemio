@@ -1,0 +1,83 @@
+#!/bin/bash
+if [ ! -d ${0/\.run/} ]
+then
+    mkdir ${0/\.run/}
+fi
+cd ${0/\.run/}
+
+N_MPI=16
+
+
+
+$ADFBIN/adf -n 16 << eor 1>>${0/run/out} 2>>${0/run/err}
+
+TITLE Au
+
+BECKEGRID
+      Quality good
+End
+
+XC
+ GGA PBE
+END
+
+
+BASIS
+TYPE TZP
+CORE SMALL
+END
+
+RELATIVISTIC scalar zora
+
+units
+length angstrom
+END
+
+symmetry
+ATOMS cartesian
+ B                 -1.71095261    0.80599433    0.46249870
+ B                 -1.73469494    0.00000000   -0.99904111
+ B                 -0.77048062    0.00000000   -2.30912674
+ B                  0.77048062    0.00000000   -2.30912674
+ B                  1.73469494    0.00000000   -0.99904111
+ B                  1.71095261   -0.80599433    0.46249870
+ B                 -1.71095261   -0.80599433    0.46249870
+ B                  1.71095261    0.80599433    0.46249870
+ La                 0.00000000   -2.09917176   -0.90645759
+ La                -0.00000000    2.09917176   -0.90645759
+ La                 0.00000000    0.00000000    2.22288383
+END
+
+!unrestricted
+CHARGE -1
+
+!occupations smearq=0.001
+
+GEOMETRY
+    optim all
+    iterations 50
+    step rad=0.15 angle=10.0
+    hessupd BFGS
+    converge e=1.0e-4 grad=1.0e-4 rad=1.0e-2 angle=0.5
+END
+
+SAVE  TAPE21
+
+AnalyticalFreq
+MAX_CPKS_ITERATIONS 500
+End
+
+SCF
+iterations 100
+converge 1.0e-6 1.0e-6
+mixing 0.2
+lshift 0.0
+diis n=500 ok=0.00001 cyc=500 cx=5.0 cxx=10.0
+END
+
+A1FIT 10.0
+
+end input
+eor
+
+
