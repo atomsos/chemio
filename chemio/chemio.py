@@ -15,6 +15,7 @@ import configparser
 import requests
 import json_tricks
 import atomtools
+import urllib
 
 
 
@@ -26,14 +27,14 @@ CONF.read(CONFIGFILE)
 SERVER_URLS = CONF.get("default", "server")
 SUPPORT_READ_EXTENSIONS = CONF.get("default", "support_read_extensions").strip().split()
 SUPPORT_WRITE_FORMATS = CONF.get("default", "support_write_formats").strip().split()
-compression = atomtools.file.compress_command
+COMPRESSION = atomtools.file.compress_command
 
 global SERVER
 SERVER = None
 
 
 def select_server(servers=SERVER_URLS):
-	global SERVER
+    global SERVER
     if SERVER is not None:
         return SERVER
     if isinstance(servers, str):
@@ -64,7 +65,7 @@ def read(filename, index=-1, server=None):
     assert os.path.exists(filename)
     assert isinstance(index, int) or isinstance(index, str) and re.match('^[+-:0-9]$', index)
     extension = os.path.splitext(filename)[-1]
-    if extension in compression:
+    if extension in COMPRESSION:
         extension = os.path.splitext(os.path.splitext(filename)[0])[-1]
     extension = extension[1:]
     if not extension:
@@ -80,7 +81,7 @@ def get_write_content(arrays, filename=None, format=None, server=None):
         data['filename'] = filename
     else:
         assert format is not None, 'format cannot be none when filename is None'
-        data['format'] =  format
+        data['format'] = format
     data.update({'arrays' : json_tricks.dumps(arrays)})
     return get_response('write', None, data=data, server=server)
 
