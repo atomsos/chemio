@@ -23,12 +23,19 @@ CONFIGFILE = os.path.join(BASEDIR, 'config.conf')
 
 CONF = configparser.ConfigParser()
 CONF.read(CONFIGFILE)
-SERVER_URL = CONF.get("default", "server")
+SERVER_URLS = CONF.get("default", "server")
 SUPPORT_READ_EXTENSIONS = CONF.get("default", "support_read_extensions").strip().split()
 SUPPORT_WRITE_FORMATS = CONF.get("default", "support_write_formats").strip().split()
 compression = atomtools.file.compress_command
 
-def select_server(servers=SERVER_URL):
+global SERVER
+SERVER = None
+
+
+def select_server(servers=SERVER_URLS):
+	global SERVER
+    if SERVER is not None:
+        return SERVER
     if isinstance(servers, str):
         servers = servers.strip().split()
     if len(servers) == 1:
@@ -36,12 +43,13 @@ def select_server(servers=SERVER_URL):
     for server in servers:
         netloc = urllib.parse.urlsplit(server).netloc
         if os.system('ping -W 1 -c 1 {0} > /dev/null'.format(netloc)) == 0:
+            SERVER = server
             return server
     raise ValueError("All servers are not available")
 
 
 def get_response(iotype, filename, data=None, server=None):
-    server = server or select_server()
+    server = select_server()
     data = data or dict()
     data['iotype'] = iotype
     if iotype == 'read':
@@ -49,8 +57,8 @@ def get_response(iotype, filename, data=None, server=None):
     else:
         files = None
     res = requests.post(server, files=files, data=data)
-    # print(res.text, res.request.body)
     return res.text
+
 
 def read(filename, index=-1, server=None):
     assert os.path.exists(filename)
