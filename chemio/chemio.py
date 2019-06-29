@@ -51,7 +51,7 @@ def get_response(iotype, filename, data=None, server=None):
     else:
         files = None
     res = requests.post(server, files=files, data=data)
-    print(res.text, res.request.body)
+    # print(res.text, res.request.body)
     return res.text
 
 def read(filename, index=-1, server=None):
