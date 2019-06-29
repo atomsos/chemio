@@ -34,11 +34,9 @@ def select_server(servers=SERVER_URL):
     if len(servers) == 1:
         return servers[0]
     for server in servers:
-        try:
-            requests.get(server)
+        netloc = urllib.parse.urlsplit(server).netloc
+        if os.system('ping -W 1 -c 1 {0} > /dev/null'.format(netloc)) == 0:
             return server
-        except:
-            pass
     raise ValueError("All servers are not available")
 
 
