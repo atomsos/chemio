@@ -7,4 +7,4 @@ __version__ = '1.0.0'
 def version():
     return __version__
 
-from .gsio import gsio
+from .chemio import read, write, preview

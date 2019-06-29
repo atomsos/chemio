@@ -6,16 +6,16 @@ from setuptools import setup, find_packages
 def get_version():
     import sys
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-    import gsio
-    return gsio.__version__
+    import chemio
+    return chemio.__version__
 
 
 if __name__ == '__main__':
     setup(
-        name='gsio',
+        name='chemio',
         version=get_version(),
         description=(
-            'basic atom tools collection'
+            'Quantum Chemical Softwares Input Generater & Output Parser'
         ),
         long_description=open('README.md').read(),
         long_description_content_type='text/markdown',
@@ -26,7 +26,7 @@ if __name__ == '__main__':
         license='MIT License',
         packages=find_packages(),
         platforms=["Linux", "Darwin"],
-        url='https://github.com/atomse/gsio',
+        url='https://github.com/atomse/chemio',
         python_requires='>=3',
         classifiers=[
             'Development Status :: 4 - Beta',
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         install_requires=open('requirements.txt').read().split(),
         entry_points={
             "console_scripts": [
-                "gsio=gsio.cli:run_gsio_cli",
+                "chemio=chemio.cli:run_chemio_cli",
             ],
         },
         extras_require={
