@@ -12,7 +12,7 @@ import chemio
 class CLICommand:
     """Print information about files or system.
 
-    Without any filename(s), informations about the ASE installation will be
+    Without any filename(s), informations about the Chemio installation will be
     shown (Python version, library versions, ...).
 
     With filename(s), the file format will be determined for each file.
