@@ -4,6 +4,8 @@
 Chemical file IO
 
 
+[![Build Status](https://travis-ci.org/atomse/chemio.svg?branch=master)](https://travis-ci.org/atomse/chemio)
+[![PyPI](https://img.shields.io/pypi/v/chemio.svg)](https://pypi.org/project/chemio)
 
 
 ## read/write
