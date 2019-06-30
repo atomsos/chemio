@@ -44,7 +44,7 @@ if __name__ == '__main__':
         install_requires=open('requirements.txt').read().split(),
         entry_points={
             "console_scripts": [
-                "chemio=chemio.cli:run_chemio_cli",
+                "chemio=chemio.cli.main:main",
             ],
         },
         extras_require={

@@ -12,10 +12,10 @@ GSIO: IO using server
 import os
 import re
 import configparser
+import urllib
 import requests
 import json_tricks
 import atomtools
-import urllib
 
 
 
@@ -49,7 +49,7 @@ def select_server(servers=SERVER_URLS):
     raise ValueError("All servers are not available")
 
 
-def get_response(iotype, filename, data=None, server=None):
+def get_response(iotype, filename, data=None):
     server = select_server()
     data = data or dict()
     data['iotype'] = iotype
@@ -61,7 +61,7 @@ def get_response(iotype, filename, data=None, server=None):
     return res.text
 
 
-def read(filename, index=-1, server=None):
+def read(filename, index=-1, format=None):
     assert os.path.exists(filename)
     assert isinstance(index, int) or isinstance(index, str) and re.match('^[+-:0-9]$', index)
     extension = os.path.splitext(filename)[-1]
@@ -71,31 +71,48 @@ def read(filename, index=-1, server=None):
     if not extension:
         extension = os.path.basename(filename)
     assert extension in SUPPORT_READ_EXTENSIONS, filename + ' not support'
-    output = get_response('read', filename, {'index': index}, server=server)
-    return json_tricks.loads(output)
+    # import pdb; pdb.set_trace()
+    output = get_response('read', filename, {'index': index})
+    output = json_tricks.loads(output)
+    if isinstance(output, dict):
+        output = atomtools.types.ExtDict(output)
+    elif isinstance(output, list):
+        output = [atomtools.types.ExtDict(_) for _ in output]
+    return output
 
 
-def get_write_content(arrays, filename=None, format=None, server=None):
+def get_write_content(arrays, filename=None, format=None):
     data = dict()
     if filename:
         data['filename'] = filename
     else:
         assert format is not None, 'format cannot be none when filename is None'
         data['format'] = format
+    if arrays.__class__.__module__ == 'ase.atoms':
+        calc_arrays = None
+        if arrays.calc:
+            calc_arrays = arrays.calc.parameters
+            calc_arrays.update(arrays.calc.results)
+        arrays = arrays.arrays
+        if calc_arrays:
+            arrays['calc_arrays'] = calc_arrays
     data.update({'arrays' : json_tricks.dumps(arrays)})
-    return get_response('write', None, data=data, server=server)
+    return get_response('write', None, data=data)
 
 
-def write(arrays, filename, format=None, server=None):
-    output = get_write_content(arrays, filename=filename, format=format, server=server)
-    with open(filename, 'w') as fd:
-        fd.write(output)
+def write(filename, arrays, format=None):
+    if filename == '-':
+        preview(arrays, format)
+    else:
+        output = get_write_content(arrays, filename=filename, format=format)
+        with open(filename, 'w') as fd:
+            fd.write(output)
 
 
-def preview(arrays, format='xyz', server=None):
-    output = get_write_content(arrays, format=format, server=server)
+def preview(arrays, format='xyz'):
+    output = get_write_content(arrays, format=format)
     print('----start----')
-    print(re.findall('<body>([\s\S]*?)</body>', output)[0], end='')
+    print(re.findall(r'<body>([\s\S]*?)</body>', output)[0], end='')
     print('----end------')
 
 
