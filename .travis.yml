@@ -13,7 +13,7 @@ before_install:
   - uname -a
 
 install:
-  - pip install --upgrade pipreqs coverage setuptools wheel twine
+  - pip install --upgrade ase pipreqs coverage setuptools wheel twine
   - pip install -r requirements.txt
 
 before_script:
