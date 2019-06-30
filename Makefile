@@ -14,6 +14,7 @@ all:
 reqs:
 	pipreqs --help >/dev/null 2>&1 || pip3 install pipreqs || pip3 install pipreqs --user
 	pipreqs --force $(Project)
+	mv $(Project)/requirements.txt .
 	sed -i 's/==/>=/g' requirements.txt
 	cat requirements.txt 
 

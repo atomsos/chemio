@@ -11,6 +11,7 @@ GSIO: IO using server
 
 import os
 import re
+import numpy
 import configparser
 import urllib
 import requests
