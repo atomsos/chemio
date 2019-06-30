@@ -4,6 +4,8 @@
 Chemical file IO
 
 
+[![Build Status](https://travis-ci.org/atomse/chemio.svg?branch=master)](https://travis-ci.org/atomse/chemio)
+[![PyPI](https://img.shields.io/pypi/v/chemio.svg)](https://pypi.org/project/chemio)
 
 
 ## read/write
@@ -11,7 +13,8 @@ Chemical file IO
 ```python
 import chemio
 chemio.read(filename, index)
-chemio.write(arrays, filename, format)
+chemio.write(filename, arrays, format)
+chemio.preview(arrays, format)
 ```
 
 
