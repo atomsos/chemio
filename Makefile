@@ -6,7 +6,7 @@ pes_parent_dir:=$(shell dirname $(pes_parent_dir))
 Project=$(shell basename $(pes_parent_dir))
 
 all:
-	make reqs
+	# make reqs
 	make build
 	make install
 	make test
@@ -15,7 +15,7 @@ reqs:
 	pipreqs --help >/dev/null 2>&1 || pip3 install pipreqs || pip3 install pipreqs --user
 	pipreqs --force $(Project)
 	mv $(Project)/requirements.txt .
-	sed -i 's/==/>=/g' requirements.txt
+	sed -i '' 's/==/>=/g' requirements.txt
 	cat requirements.txt 
 
 build:
