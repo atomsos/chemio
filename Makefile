@@ -28,6 +28,7 @@ install:
 	cd /tmp; pip uninstall -yy $(Project); cd -; python setup.py install || python setup.py install --user
 
 test:
+	for i in `ls tests/Testcases/*.*`; do `which $(Project)` info -v $$i ; done
 	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py" 
 	echo `which $(Project)`
 	# coverage run --source $(Project) `which $(Project)` -h
