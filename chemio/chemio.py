@@ -93,14 +93,18 @@ def get_write_content(arrays, filename=None, format=None):
         if calc_arrays:
             arrays['calc_arrays'] = calc_arrays
     data.update({'arrays' : json_tricks.dumps(arrays)})
-    return get_response('write', None, data=data)
+    output = get_response('write', None, data=data)
+    output = re.findall(r'<body>([\s\S]*?)</body>', output)[0]
+    return output
 
 
 def write(filename, arrays, format=None):
+    format = format or filetype(filename)
+    assert format is not None, 'We cannot determine your filetype, please give it with -o XXX'
     if filename == '-':
         preview(arrays, format)
     else:
-        output = get_write_content(arrays, filename=filename, format=format)
+        output = get_write_content(arrays, format=format)
         with open(filename, 'w') as fd:
             fd.write(output)
 
@@ -108,7 +112,7 @@ def write(filename, arrays, format=None):
 def preview(arrays, format='xyz'):
     output = get_write_content(arrays, format=format)
     print('----start----')
-    print(re.findall(r'<body>([\s\S]*?)</body>', output)[0], end='')
+    print(output)
     print('----end------')
 
 
