@@ -11,9 +11,9 @@ GSIO: IO using server
 
 import os
 import re
-import numpy
-import configparser
 import urllib
+import configparser
+
 import requests
 import json_tricks
 import atomtools
@@ -62,13 +62,15 @@ def get_response(iotype, filename, data=None):
     return res.text
 
 
-def read(filename, index=-1, format=None):
+def read(filename, index=-1, format=None, debug=False):
     assert os.path.exists(filename)
     assert isinstance(index, int) or isinstance(index, str) and re.match('^[+-:0-9]$', index)
     format = format or atomtools.filetype(filename)
     if format is None:
         raise NotImplementedError('format cannot be parsed, please check filetype')
     output = get_response('read', filename, {'index': index, 'format' : format})
+    if debug:
+        print(output)
     output = json_tricks.loads(output)
     if isinstance(output, dict):
         output = atomtools.types.ExtDict(output)
@@ -99,7 +101,7 @@ def get_write_content(arrays, filename=None, format=None):
 
 
 def write(filename, arrays, format=None):
-    format = format or filetype(filename)
+    format = format or atomtools.filetype(filename)
     assert format is not None, 'We cannot determine your filetype, please give it with -o XXX'
     assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(format)
     if filename == '-':
