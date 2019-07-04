@@ -34,7 +34,8 @@ def test():
         print(_format)
         chemio.preview(arrays, _format)
         wfname = '/tmp/a.{0}'.format(_format)
-        chemio.write(wfname, arrays)
+        print(wfname)
+        chemio.write(wfname, arrays, _format)
         os.remove(wfname)
     # test read
     testfilenames = os.listdir(TESTDIR)

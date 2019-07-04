@@ -3,7 +3,7 @@ CHEMIO
 """
 
 
-__version__ = '1.4.3'
+__version__ = '1.4.4'
 def version():
     return __version__
 

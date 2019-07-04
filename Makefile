@@ -15,9 +15,9 @@ reqs:
 	pipreqs --help >/dev/null 2>&1 || pip3 install pipreqs || pip3 install pipreqs --user
 	pipreqs --force $(Project)
 	mv $(Project)/requirements.txt .
-	[ "$$(uname)" == "Darwin" ] && sed -i '' 's/==/>=/g' requirements.txt || sed -i 's/==/>=/g' requirements.txt
-	[ "$$(uname)" == "Darwin" ] && sed -i '' 's/numpy.*/numpy/g' requirements.txt || sed -i 's/numpy.*/numpy/g' requirements.txt
-	[ "$$(uname)" == "Darwin" ] && sed -i '' 's/psutil.*/psutil/g' requirements.txt || sed -i 's/psutil.*/psutil/g' requirements.txt
+	bash -c '[ "$(shell uname)" == "Darwin" ] && sed -i "" "s/==/>=/g" requirements.txt || sed -i "s/==/>=/g" requirements.txt'
+	bash -c '[ "$(shell uname)" == "Darwin" ] && sed -i "" "s/numpy.*/numpy/g" requirements.txt || sed -i "s/numpy.*/numpy/g" requirements.txt'
+	bash -c '[ "$(shell uname)" == "Darwin" ] && sed -i "" "s/psutil.*/psutil/g" requirements.txt || sed -i "s/psutil.*/psutil/g" requirements.txt'
 	cat requirements.txt 
 
 build:
