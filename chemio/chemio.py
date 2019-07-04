@@ -65,15 +65,9 @@ def get_response(iotype, filename, data=None):
 def read(filename, index=-1, format=None):
     assert os.path.exists(filename)
     assert isinstance(index, int) or isinstance(index, str) and re.match('^[+-:0-9]$', index)
-    if not format:
-        extension = os.path.splitext(filename)[-1]
-        if extension in COMPRESSION:
-            extension = os.path.splitext(os.path.splitext(filename)[0])[-1]
-        extension = extension[1:]
-        if not extension:
-            extension = os.path.basename(filename)
-        assert extension in SUPPORT_READ_EXTENSIONS, filename + ' not support'
-        # import pdb; pdb.set_trace()
+    format = format or atomtools.filetype(filename)
+    if format is None:
+        raise NotImplementedError('format cannot be parsed, please check filetype')
     output = get_response('read', filename, {'index': index, 'format' : format})
     output = json_tricks.loads(output)
     if isinstance(output, dict):

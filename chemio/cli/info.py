@@ -1,3 +1,10 @@
+"""
+
+chemio info cli 
+
+
+"""
+import json_tricks
 import chemio
 
 
@@ -40,3 +47,6 @@ class CLICommand:
                     print(filename, arrays[args.key])
                 except:
                     print(filename, None)
+            else:
+                print(json_tricks.dumps(arrays, indent=4))
+   

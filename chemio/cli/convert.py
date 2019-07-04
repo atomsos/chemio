@@ -51,6 +51,7 @@ class CLICommand:
 
     @staticmethod
     def run(args, parser):
+        # print(args)
         if args.verbose:
             print(', '.join(args.input), '->', args.output)
         # if args.arrays:
@@ -65,6 +66,7 @@ class CLICommand:
         configs = []
         for filename in args.input:
             atoms = read(filename, args.image_number, format=args.input_format)
+            # print(atoms)
             if isinstance(atoms, list):
                 configs.extend(atoms)
             else:
@@ -88,7 +90,9 @@ class CLICommand:
         if not args.force and os.path.isfile(args.output):
             parser.error('File already exists: {}'.format(args.output))
 
-        if args.split_output:
+        if len(configs) == 1:
+            write(args.output, configs[0], format=args.output_format)
+        elif args.split_output:
             for i, atoms in enumerate(configs):
                 write(args.output.format(i), atoms, format=args.output_format)
         else:
