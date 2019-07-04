@@ -101,6 +101,7 @@ def get_write_content(arrays, filename=None, format=None):
 def write(filename, arrays, format=None):
     format = format or filetype(filename)
     assert format is not None, 'We cannot determine your filetype, please give it with -o XXX'
+    assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(format)
     if filename == '-':
         preview(arrays, format)
     else:
