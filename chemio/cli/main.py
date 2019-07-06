@@ -45,6 +45,7 @@ def main(prog=program, description='Chem IO command line tool.',
     parser.add_argument('--version', action='version',
                         version='%(prog)s-{}'.format(version))
     parser.add_argument('-T', '--traceback', action='store_true')
+    parser.add_argument('--debug', action='store_true')
     subparsers = parser.add_subparsers(title='Sub-commands',
                                        dest='command')
 

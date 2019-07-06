@@ -29,6 +29,8 @@ class CLICommand:
     def add_arguments(parser):
         parser.add_argument('filename', nargs='*',
                             help='Name of file to determine format for.')
+        parser.add_argument('-i', '--index' , default=-1,
+                            help='Index to show')
         parser.add_argument('-v', '--verbose', action='store_true',
                             help='Show more information about files.')
         parser.add_argument('-k', '--key',
@@ -39,7 +41,7 @@ class CLICommand:
         if not args.filename:
             raise ValueError("No filename is given")
         for filename in args.filename:
-            arrays = chemio.read(filename)
+            arrays = chemio.read(filename, index=args.index, debug=args.debug)
             if args.verbose:
                 print(arrays)
             if args.key:
