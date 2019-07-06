@@ -79,13 +79,10 @@ def read(filename, index=-1, format=None, debug=False):
     return output
 
 
-def get_write_content(arrays, filename=None, format=None):
+def get_write_content(arrays, format=None, debug=False):
     data = dict()
-    if filename:
-        data['filename'] = filename
-    else:
-        assert format is not None, 'format cannot be none when filename is None'
-        data['format'] = format
+    assert format is not None, 'format cannot be none when filename is None'
+    data['format'] = format
     if arrays.__class__.__module__ == 'ase.atoms':
         calc_arrays = None
         if arrays.calc:
@@ -100,22 +97,24 @@ def get_write_content(arrays, filename=None, format=None):
     return output
 
 
-def write(filename, arrays, format=None):
+def write(filename, arrays, format=None, debug=False):
     format = format or atomtools.filetype(filename)
-    assert format is not None, 'We cannot determine your filetype, please give it with -o XXX'
+    assert format is not None, 'We cannot determine your filetype supports {0}'.format(' '.join(SUPPORT_WRITE_FORMATS))
     assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(format)
     if filename == '-':
-        preview(arrays, format)
+        preview(arrays, format=format, debug=debug)
     else:
-        output = get_write_content(arrays, format=format)
+        output = get_write_content(arrays, format=format, debug=debug)
         with open(filename, 'w') as fd:
             fd.write(output)
 
 
-def preview(arrays, format='xyz'):
-    output = get_write_content(arrays, format=format)
+def preview(arrays, format='xyz', debug=False):
+    output = get_write_content(arrays, format=format, debug=debug)
     print('----start----')
     print(output)
     print('----end------')
 
+
+select_server()
 

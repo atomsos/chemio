@@ -51,7 +51,8 @@ class CLICommand:
 
     @staticmethod
     def run(args, parser):
-        # print(args)
+        if args.debug:
+            print(args)
         if args.verbose:
             print(', '.join(args.input), '->', args.output)
         # if args.arrays:
@@ -72,6 +73,8 @@ class CLICommand:
             else:
                 configs.append(atoms)
 
+        if args.debug:
+            print(configs)
         # new_configs = []
         # for atoms in configs:
         #     if args.arrays:
@@ -91,9 +94,15 @@ class CLICommand:
             parser.error('File already exists: {}'.format(args.output))
 
         if len(configs) == 1:
+            if args.debug:
+                print('only 1 image')
             write(args.output, configs[0], format=args.output_format)
         elif args.split_output:
+            if args.debug:
+                print('{0} images and split'.format(len(configs)))
             for i, atoms in enumerate(configs):
                 write(args.output.format(i), atoms, format=args.output_format)
         else:
+            if args.debug:
+                print('{0} images and not split'.format(len(configs)))
             write(args.output, configs, format=args.output_format)
