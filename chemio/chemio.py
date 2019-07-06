@@ -79,6 +79,13 @@ def read(filename, index=-1, format=None, debug=False):
     return output
 
 
+def check_multiframe(arrays, format):
+    assert format in atomtools.list_supported_formats()
+    if isinstance(arrays, dict) or isinstance(arrays, list) and format in atomtools.support_multiframe():
+        return True
+    return False
+
+
 def get_write_content(arrays, format=None, debug=False):
     data = dict()
     assert format is not None, 'format cannot be none when filename is None'
@@ -91,6 +98,10 @@ def get_write_content(arrays, format=None, debug=False):
         arrays = arrays.arrays
         if calc_arrays:
             arrays['calc_arrays'] = calc_arrays
+    if check_multiframe(arrays, format):
+        if debug:
+            print('format {0} not support list array, turns to last image'.format(format))
+        arrays = arrays[-1]
     data.update({'arrays' : json_tricks.dumps(arrays)})
     output = get_response('write', None, data=data)
     output = re.findall(r'<body>([\s\S]*?)</body>', output)[0]
