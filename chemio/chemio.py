@@ -99,7 +99,7 @@ def get_write_content(arrays, format=None, debug=False):
         arrays = arrays.arrays
         if calc_arrays:
             arrays['calc_arrays'] = calc_arrays
-    if check_multiframe(arrays, format):
+    if not check_multiframe(arrays, format):
         if debug:
             print('format {0} not support list array, turns to last image'.format(format))
         arrays = arrays[-1]

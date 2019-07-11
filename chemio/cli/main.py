@@ -42,10 +42,10 @@ def main(prog=program, description='Chem IO command line tool.',
     parser = argparse.ArgumentParser(prog=prog,
                                      description=description,
                                      formatter_class=Formatter)
-    parser.add_argument('--version', action='version',
+    parser.add_argument('-V', '--version', action='version',
                         version='%(prog)s-{}'.format(version))
     parser.add_argument('-T', '--traceback', action='store_true')
-    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('-D', '--debug', action='store_true')
     subparsers = parser.add_subparsers(title='Sub-commands',
                                        dest='command')
 
