@@ -35,11 +35,9 @@ else:
     COMPRESSION = atomtools.file.compress_command
 
 
-print(SERVER_URLS)
 global SERVER
 SERVER = None
 
-# SERVER_URLS=http://127.0.0.1:5000/
 
 
 def select_server(servers=SERVER_URLS, debug=False):
