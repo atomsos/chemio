@@ -28,10 +28,10 @@ SUPPORT_READ_EXTENSIONS = CONF.get("default", "support_read_extensions").strip()
 SUPPORT_WRITE_FORMATS = CONF.get("default", "support_write_formats").strip().split()
 
 
-if os.environ.get("SERVER_URLS", None):
-    SERVER_URLS = os.environ.get("SERVER_URLS")
+if os.environ.get("CHEMIO_SERVER_URLS", None):
+    CHEMIO_SERVER_URLS = os.environ.get("CHEMIO_SERVER_URLS")
 else:
-    SERVER_URLS = CONF.get("default", "server")
+    CHEMIO_SERVER_URLS = CONF.get("default", "server")
     COMPRESSION = atomtools.file.compress_command
 
 
@@ -40,7 +40,7 @@ SERVER = None
 
 
 
-def select_server(servers=SERVER_URLS, debug=False):
+def select_server(servers=CHEMIO_SERVER_URLS, debug=False):
     global SERVER
     if SERVER is not None:
         return SERVER
@@ -50,8 +50,8 @@ def select_server(servers=SERVER_URLS, debug=False):
         return servers[0]
     for server in servers:
         netloc = urllib.parse.urlsplit(server).netloc.split(":")[0]
-        if os.system('ping  -W 1 -c 1 {0} > /dev/null'.format(netloc)) == 0 or\
-           os.system('ping6 -W 1 -c 1 {0} > /dev/null'.format(netloc)) == 0:
+        if os.system('ping  -W 1 -c 1 {0} > /dev/null || \
+                ping6 -W 1 -c 1 {0} > /dev/null'.format(netloc)) == 0:
             SERVER = server
             if debug:
                 print('server:', server)
