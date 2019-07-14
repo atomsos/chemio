@@ -79,8 +79,9 @@ def get_response(iotype, filename, data=None, debug=False):
 
 
 def read(filename, index=-1, format=None, debug=False):
-    assert os.path.exists(filename)
-    assert isinstance(index, int) or isinstance(index, str) and re.match('^[+-:0-9]$', index)
+    assert os.path.exists(filename), '{0} not exist'.format(filename)
+    assert isinstance(index, int) or isinstance(index, str) and \
+        re.match('^[+-:0-9]$', index), '{0} is not a int or :'.format(index)
     format = format or atomtools.filetype(filename)
     if format is None:
         raise NotImplementedError('format cannot be parsed, please check filetype')
@@ -96,14 +97,14 @@ def read(filename, index=-1, format=None, debug=False):
 
 
 def check_multiframe(arrays, format):
-    assert format in atomtools.list_supported_formats()
+    assert format in atomtools.list_supported_formats(), '{0} not in {1}'.format(format, atomtools.list_supported_formats())
     if isinstance(arrays, dict) or isinstance(arrays, list)\
         and atomtools.support_multiframe(format):
         return True
     return False
 
 
-def get_write_content(arrays, format=None, debug=False):
+def get_write_content(arrays, format=None, debug=False, **kwargs):
     data = dict()
     assert format is not None, 'format cannot be none when filename is None'
     data['format'] = format
@@ -119,6 +120,8 @@ def get_write_content(arrays, format=None, debug=False):
         if debug:
             print('format {0} not support list array, turns to last image'.format(format))
         arrays = arrays[-1]
+    print(kwargs)
+    arrays.update(kwargs)
     data.update({'arrays' : json_tricks.dumps(arrays)})
     output = get_response('write', None, data=data, debug=debug)
     return output
@@ -126,14 +129,15 @@ def get_write_content(arrays, format=None, debug=False):
 
 def write(filename, arrays, format=None, debug=False):
     format = format or atomtools.filetype(filename)
-    assert format is not None, 'We cannot determine your filetype supports {0}'.format(\
+    assert format is not None, 'We cannot determine your filetype. Supports {0}'.format(\
         ' '.join(SUPPORT_WRITE_FORMATS))
     assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(format)
     if filename == '-':
         preview(arrays, format=format, debug=debug)
     else:
-        arrays['filename'] = filename
-        output = get_write_content(arrays, format=format, debug=debug)
+        # arrays['filename'] = filename
+        kwargs = {'filename' : filename}
+        output = get_write_content(arrays, format=format, debug=debug, **kwargs)
         with open(filename, 'w') as fd:
             fd.write(output)
 
