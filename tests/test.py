@@ -29,13 +29,13 @@ SUPPORT_WRITE_FORMATS = CONF.get("default", "support_write_formats").strip().spl
 
 def test():
     # test ase
-    arrays = ase.build.molecule("CH4")
+    arrays = ase.build.molecule("CH4") # .arrays
     for _format in SUPPORT_WRITE_FORMATS:
-        print(_format)
-        chemio.preview(arrays, _format)
+        print('-'*50+'\n', _format)
+        chemio.preview(arrays, _format, debug=True)
         wfname = '/tmp/a.{0}'.format(_format)
-        print(wfname)
-        chemio.write(wfname, arrays, _format)
+        print('-'*50+'\n', wfname)
+        chemio.write(wfname, arrays, _format, debug=True)
         os.remove(wfname)
     # test read
     testfilenames = os.listdir(TESTDIR)
@@ -44,14 +44,14 @@ def test():
         filename = os.path.join(TESTDIR, filename)
         if not os.path.isfile(filename):
             continue
-        arrays = chemio.read(filename)
-        print(arrays)
+        arrays = chemio.read(filename, debug=True)
+        print('-'*50+'\n', arrays)
     # test write
     for _format in SUPPORT_WRITE_FORMATS:
-        print(_format)
-        chemio.preview(arrays, _format)
+        print('-'*50+'\n', _format)
+        chemio.preview(arrays, _format, debug=True)
         wfname = '/tmp/a.{0}'.format(_format)
-        chemio.write(wfname, arrays)
+        chemio.write(wfname, arrays, _format, debug=True)
         os.remove(wfname)
 
 if __name__ == '__main__':
