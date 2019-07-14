@@ -1,7 +1,7 @@
-# CHEMIO
+# Chemio Chemical files Input/Output
 
 
-Chemical file IO
+Chemical file Input/Output
 
 
 [![Build Status](https://travis-ci.org/atomse/chemio.svg?branch=master)](https://travis-ci.org/atomse/chemio)
