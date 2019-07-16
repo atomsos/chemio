@@ -18,7 +18,7 @@ import chemio
 
 
 BASEDIR = os.path.dirname(os.path.abspath(__file__))
-TESTDIR = os.path.join(BASEDIR, 'Testcases')
+TESTDIR = os.path.join(BASEDIR, 'chem_file_samples')
 BASEDIR = os.path.join(BASEDIR, '../chemio')
 CONFIGFILE = os.path.join(BASEDIR, 'config.conf')
 
