@@ -23,7 +23,7 @@ before_script:
 script:
   - make build
   - make install
-  - make test
+  - make test_travis
 
 notifications:
   email: false
