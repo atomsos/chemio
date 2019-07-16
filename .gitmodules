@@ -1,0 +1,3 @@
+[submodule "tests/chem_file_samples"]
+	path = tests/chem_file_samples
+	url = https://github.com/atomse/chem_file_samples.git
