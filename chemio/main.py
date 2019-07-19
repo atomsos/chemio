@@ -59,19 +59,15 @@ def select_server(servers=CHEMIO_SERVER_URLS, debug=False):
     raise ValueError("All servers are not available")
 
 
-def get_response(iotype, filename, data=None, debug=False):
+def get_response(method, files=None, data=None, debug=False):
+    assert method in ['read', 'write', 'convert']
     import requests
     server = select_server(debug=debug)
     data = data or dict()
-    data['iotype'] = iotype
-    if iotype == 'read':
-        files = {'file' : open(filename, 'rb')}
-    else:
-        files = None
+    url = server + '/' + method
     if server.endswith('/'):
-        url = server + iotype
-    else:
-        url = server + '/' + iotype
+        url = server + method
+    data['method'] = method
     res = requests.post(url, files=files, data=data)
     if debug:
         print(res.headers, res.text)
@@ -85,7 +81,9 @@ def read(filename, index=-1, format=None, debug=False):
     format = format or atomtools.filetype(filename)
     if format is None:
         raise NotImplementedError('format cannot be parsed, please check filetype')
-    output = get_response('read', filename, {'index': index, 'format' : format}, debug=debug)
+    files = {'read_file' : open(filename, 'rb')}
+    data = {'read_index': index, 'read_format' : format}
+    output = get_response('read', files, data, debug=debug)
     if debug:
         print(output)
     output = json_tricks.loads(output)
@@ -107,7 +105,7 @@ def check_multiframe(arrays, format):
 def get_write_content(arrays, format=None, debug=False, **kwargs):
     data = dict()
     assert format is not None, 'format cannot be none when filename is None'
-    data['format'] = format
+    data['write_format'] = format
     if arrays.__class__.__module__ == 'ase.atoms':
         calc_arrays = None
         if arrays.calc:
@@ -136,14 +134,40 @@ def write(filename, arrays, format=None, debug=False):
         preview(arrays, format=format, debug=debug)
     else:
         # arrays['filename'] = filename
-        kwargs = {'filename' : filename}
+        kwargs = {'write_filename' : filename}
         output = get_write_content(arrays, format=format, debug=debug, **kwargs)
         with open(filename, 'w') as fd:
             fd.write(output)
 
 
+def convert(read_filename, write_filename, index=-1,\
+            read_format=None, write_format=None, debug=False):
+    assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
+    read_format = read_format or atomtools.filetype(read_filename)
+    assert read_format is not None, \
+        'We cannot determine your filetype of file: {0}'.format(read_filename)
+    write_format = write_format or atomtools.filetype(write_filename)
+    assert write_format is not None, \
+        'We cannot determine your filetype of file: {0}'.format(write_filename)
+    files = {'read_file' : open(read_filename, 'rb')}
+    data = {'read_index' : index, 'read_format' : read_format, \
+            'write_filename' : write_filename, 'write_format' : write_format}
+    output = get_response('convert', files, data, debug=debug)
+    if write_filename == '-':
+        __preview__(output)
+    else:
+        with open(filename, 'w') as fd:
+            fd.write(output)
+
+
+
 def preview(arrays, format='xyz', debug=False):
     output = get_write_content(arrays, format=format, debug=debug)
+    __preview__(output)
+
+
+
+def __preview__(output):
     print('----start----')
     print(output)
     print('----end------')
