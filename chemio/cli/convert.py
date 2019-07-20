@@ -1,6 +1,6 @@
 import os
 
-from chemio import read, write
+from chemio.main import convert
 
 
 class CLICommand:
@@ -15,7 +15,8 @@ class CLICommand:
         add = parser.add_argument
         add('-v', '--verbose', action='store_true',
             help='Print names of converted files')
-        add('input', nargs='+', metavar='input-file')
+        add('input',# nargs='+',
+            metavar='input-file')
         add('-i', '--input-format', metavar='FORMAT',
             help='Specify input FORMAT')
         add('output', metavar='output-file')
@@ -65,44 +66,46 @@ class CLICommand:
         #         print('Filtering to include info: ', ', '.join(args.info))
 
         configs = []
-        for filename in args.input:
-            atoms = read(filename, args.image_number, format=args.input_format)
-            # print(atoms)
-            if isinstance(atoms, list):
-                configs.extend(atoms)
-            else:
-                configs.append(atoms)
+        # for filename in args.input:
+        #     atoms = read(filename, args.image_number, format=args.input_format)
+        #     # print(atoms)
+        #     if isinstance(atoms, list):
+        #         configs.extend(atoms)
+        #     else:
+        #         configs.append(atoms)
 
-        if args.debug:
-            print(configs)
-        # new_configs = []
-        # for atoms in configs:
-        #     if args.arrays:
-        #         atoms.arrays = dict((k, atoms.arrays[k]) for k in args.arrays)
-        #     if args.info:
-        #         atoms.info = dict((k, atoms.info[k]) for k in args.info)
-        #     if args.exec_code:
-        #         # avoid exec() for Py 2+3 compat.
-        #         eval(compile(args.exec_code, '<string>', 'exec'))
-        #     if args.exec_file:
-        #         eval(compile(open(args.exec_file).read(), args.exec_file, 'exec'))
-        #     if  "_output" not in atoms.info or atoms.info["_output"]:
-        #         new_configs.append(atoms)
-        # configs = new_configs
+        # if args.debug:
+        #     print(configs)
+        # # new_configs = []
+        # # for atoms in configs:
+        # #     if args.arrays:
+        # #         atoms.arrays = dict((k, atoms.arrays[k]) for k in args.arrays)
+        # #     if args.info:
+        # #         atoms.info = dict((k, atoms.info[k]) for k in args.info)
+        # #     if args.exec_code:
+        # #         # avoid exec() for Py 2+3 compat.
+        # #         eval(compile(args.exec_code, '<string>', 'exec'))
+        # #     if args.exec_file:
+        # #         eval(compile(open(args.exec_file).read(), args.exec_file, 'exec'))
+        # #     if  "_output" not in atoms.info or atoms.info["_output"]:
+        # #         new_configs.append(atoms)
+        # # configs = new_configs
 
-        if not args.force and os.path.isfile(args.output):
-            parser.error('File already exists: {}'.format(args.output))
+        # if not args.force and os.path.isfile(args.output):
+        #     parser.error('File already exists: {}'.format(args.output))
 
-        if len(configs) == 1:
-            if args.debug:
-                print('only 1 image')
-            write(args.output, configs[0], format=args.output_format)
-        elif args.split_output:
-            if args.debug:
-                print('{0} images and split'.format(len(configs)))
-            for i, atoms in enumerate(configs):
-                write(args.output.format(i), atoms, format=args.output_format)
-        else:
-            if args.debug:
-                print('{0} images and not split'.format(len(configs)))
-            write(args.output, configs, format=args.output_format)
+        # if len(configs) == 1:
+        #     if args.debug:
+        #         print('only 1 image')
+        #     write(args.output, configs[0], format=args.output_format)
+        # elif args.split_output:
+        #     if args.debug:
+        #         print('{0} images and split'.format(len(configs)))
+        #     for i, atoms in enumerate(configs):
+        #         write(args.output.format(i), atoms, format=args.output_format)
+        # else:
+        #     if args.debug:
+        #         print('{0} images and not split'.format(len(configs)))
+        #     write(args.output, configs, format=args.output_format)
+        convert(args.input, args.output, args.image_number,
+                args.input_format, args.output_format, args.debug)
