@@ -46,6 +46,8 @@ def main(prog=program, description='Chem IO command line tool.',
                         version='%(prog)s-{}'.format(version))
     parser.add_argument('-T', '--traceback', action='store_true')
     parser.add_argument('-D', '--debug', action='store_true')
+    parser.add_argument('-P', '--profile', action='store_true')
+    parser.add_argument('--nocheck', action='store_true')
     subparsers = parser.add_subparsers(title='Sub-commands',
                                        dest='command')
 
@@ -88,6 +90,11 @@ def main(prog=program, description='Chem IO command line tool.',
     else:
         args = parser.parse_args(args)
 
+    if args.profile:
+        pass
+        # from cProfile import Profile
+        # prof = Profile()
+        # prof.enable()
     if args.command == 'help':
         if args.helpcommand is None:
             parser.print_help()
@@ -114,6 +121,10 @@ def main(prog=program, description='Chem IO command line tool.',
                 l2 = ('To get a full traceback, use: {} -T {} ...'
                       .format(prog, args.command))
                 parser.error(l1 + l2)
+    if args.profile:
+        pass
+        # prof.create_stats()
+        # prof.print_stats()
 
 
 class Formatter(argparse.HelpFormatter):

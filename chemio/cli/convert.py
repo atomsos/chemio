@@ -108,4 +108,6 @@ class CLICommand:
         #         print('{0} images and not split'.format(len(configs)))
         #     write(args.output, configs, format=args.output_format)
         convert(args.input, args.output, args.image_number,
-                args.input_format, args.output_format, args.debug)
+                args.input_format, args.output_format,
+                format_nocheck=args.nocheck.
+                debug=args.debug)

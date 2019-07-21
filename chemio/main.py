@@ -15,7 +15,7 @@ import urllib.parse
 import configparser
 import gzip
 
-import atomtools
+import atomtools.file, atomtools.types, atomtools.filetype
 import json_tricks
 
 
@@ -67,8 +67,8 @@ def get_response(method, files=None, data=None, debug=False):
     data['method'] = method
     res = requests.post(url, files=files, data=data)
     if debug:
-        print('\n\nheader:\n', res.headers)
-        print('\n\ntext:\n', res.text)
+        print('\n\nheader:\n{0}'.format(res.headers))
+        print('\n\ntext:\n{0}'.format(res.text))
     return res.text
 
 
@@ -85,18 +85,19 @@ def get_compressed_file(filename):
 
 
 
-def read(read_filename, index=-1, format=None, debug=False):
+def read(read_filename, index=-1, format=None, format_nocheck=False, debug=False):
     assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
     assert isinstance(index, int) or isinstance(index, str) and \
         re.match('^[+-:0-9]$', index), '{0} is not a int or :'.format(index)
-    format = format or atomtools.filetype(read_filename)
+    if not format_nocheck:
+        format = format or atomtools.filetype.filetype(read_filename)
     if format is None:
         raise NotImplementedError('format cannot be parsed, please check filetype')
-    compressed_filename, will_be_removed = get_compressed_file(read_filename)
+    compressed_filename, remove_flag = get_compressed_file(read_filename)
     files = {'read_file' : open(compressed_filename, 'rb')}
     data = {'read_index': index, 'read_format' : format}
     output = get_response('read', files, data, debug=debug)
-    if will_be_removed:
+    if remove_flag:
         os.remove(compressed_filename)
     if debug:
         print(files, data, output)
@@ -109,9 +110,10 @@ def read(read_filename, index=-1, format=None, debug=False):
 
 
 def check_multiframe(arrays, format):
-    assert format in atomtools.list_supported_formats(), '{0} not in {1}'.format(format, atomtools.list_supported_formats())
+    assert format in atomtools.filetype.list_supported_formats(), \
+        '{0} not in {1}'.format(format, atomtools.filetype.list_supported_formats())
     if isinstance(arrays, dict) or isinstance(arrays, list)\
-        and atomtools.support_multiframe(format):
+        and atomtools.filetype.support_multiframe(format):
         return True
     return False
 
@@ -140,11 +142,12 @@ def get_write_content(arrays, format=None, debug=False, **kwargs):
     return output
 
 
-def write(write_filename, arrays, format=None, debug=False):
-    format = format or atomtools.filetype(write_filename)
-    assert format is not None, 'We cannot determine your filetype. Supports {0}'.format(\
-        ' '.join(SUPPORT_WRITE_FORMATS))
-    assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(format)
+def write(write_filename, arrays, format=None, format_nocheck=False, debug=False):
+    if not format_nocheck:
+        format = format or atomtools.filetype.filetype(write_filename)
+        assert format is not None, 'We cannot determine your filetype. Supports {0}'.format(\
+            ' '.join(SUPPORT_WRITE_FORMATS))
+        assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(format)
     if write_filename == '-':
         preview(arrays, format=format, debug=debug)
     else:
@@ -155,21 +158,24 @@ def write(write_filename, arrays, format=None, debug=False):
             fd.write(output)
 
 
-def convert(read_filename, write_filename, index=-1,\
-            read_format=None, write_format=None, debug=False):
+def convert(read_filename, write_filename, index=-1,
+            read_format=None, write_format=None,
+            format_nocheck=False, debug=False):
     assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
-    read_format = read_format or atomtools.filetype(read_filename)
-    assert read_format is not None, \
-        'We cannot determine your filetype of file: {0}'.format(read_filename)
-    write_format = write_format or atomtools.filetype(write_filename)
+    if not format_nocheck:
+        read_format = read_format or atomtools.filetype.filetype(read_filename)
+        assert read_format is not None, \
+            'We cannot determine your filetype of file: {0}'.format(read_filename)
+    write_format = write_format or atomtools.filetype.filetype(write_filename)
     assert write_format is not None, \
         'We cannot determine your filetype of file: {0}'.format(write_filename)
-    compressed_filename = get_compressed_file(read_filename)
+    compressed_filename, remove_flag = get_compressed_file(read_filename)
     files = {'read_file' : open(compressed_filename, 'rb')}
     data = {'read_index' : index, 'read_format' : read_format, \
             'write_filename' : write_filename, 'write_format' : write_format}
     output = get_response('convert', files, data, debug=debug)
-    os.remove(compressed_filename)
+    if remove_flag:
+        os.remove(compressed_filename)
     if write_filename == '-':
         __preview__(output)
     else:

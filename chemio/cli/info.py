@@ -41,7 +41,9 @@ class CLICommand:
         if not args.filename:
             raise ValueError("No filename is given")
         for filename in args.filename:
-            arrays = chemio.read(filename, index=args.index, debug=args.debug)
+            arrays = chemio.read(filename, index=args.index,
+                                 format_nocheck=args.nocheck,
+                                 debug=args.debug)
             if args.verbose:
                 print(arrays)
             if args.key:
