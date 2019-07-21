@@ -70,7 +70,8 @@ def get_response(method, files=None, data=None, debug=False):
     data['method'] = method
     res = requests.post(url, files=files, data=data)
     if debug:
-        print(res.headers, res.text)
+        print('\n\nheader:\n', res.headers)
+        print('\n\ntext:\n', res.text)
     return res.text
 
 
@@ -118,7 +119,8 @@ def get_write_content(arrays, format=None, debug=False, **kwargs):
         if debug:
             print('format {0} not support list array, turns to last image'.format(format))
         arrays = arrays[-1]
-    print(kwargs)
+    if debug:
+        print(kwargs)
     arrays.update(kwargs)
     data.update({'arrays' : json_tricks.dumps(arrays)})
     output = get_response('write', None, data=data, debug=debug)
@@ -156,7 +158,7 @@ def convert(read_filename, write_filename, index=-1,\
     if write_filename == '-':
         __preview__(output)
     else:
-        with open(filename, 'w') as fd:
+        with open(write_filename, 'w') as fd:
             fd.write(output)
 
 

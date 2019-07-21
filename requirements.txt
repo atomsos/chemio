@@ -1,3 +1,4 @@
 json_tricks>=3.13.1
+atomtools.egg>=info
 requests>=2.22.0
-atomtools>=1.7.7
+atomtools>=1.7.9
