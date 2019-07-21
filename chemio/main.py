@@ -50,8 +50,8 @@ def select_server(servers=CHEMIO_SERVER_URLS, debug=False):
         return servers[0]
     for server in servers:
         netloc = urllib.parse.urlsplit(server).netloc.split(":")[0]
-        if os.system('ping  -W 1 -c 1 {0} > /dev/null || \
-                ping6 -W 1 -c 1 {0} > /dev/null'.format(netloc)) == 0:
+        if os.system('ping  -W 1 -c 1 {0} > /dev/null 2>&1 || \
+                ping6 -W 1 -c 1 {0} > /dev/null 2>&1'.format(netloc)) == 0:
             SERVER = server
             if debug:
                 print('server:', server)
