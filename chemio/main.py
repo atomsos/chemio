@@ -13,10 +13,10 @@ import os
 import re
 import urllib.parse
 import configparser
+import gzip
 
-import json_tricks
 import atomtools
-
+import json_tricks
 
 
 BASEDIR = os.path.dirname(os.path.abspath(__file__))
@@ -75,18 +75,33 @@ def get_response(method, files=None, data=None, debug=False):
     return res.text
 
 
-def read(filename, index=-1, format=None, debug=False):
-    assert os.path.exists(filename), '{0} not exist'.format(filename)
+
+def get_compressed_file(filename):
+    if atomtools.file.is_compressed_file(filename):
+        return filename
+    compressed_filename = filename+'.gz'
+    compressed_filename = os.path.join('/tmp', os.path.basename(compressed_filename))
+    with open(filename, 'rb') as f_in:
+        with gzip.open(compressed_filename, 'wb', compresslevel=3) as f_out:
+            f_out.write(f_in.read())
+    return compressed_filename
+
+
+
+def read(read_filename, index=-1, format=None, debug=False):
+    assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
     assert isinstance(index, int) or isinstance(index, str) and \
         re.match('^[+-:0-9]$', index), '{0} is not a int or :'.format(index)
-    format = format or atomtools.filetype(filename)
+    format = format or atomtools.filetype(read_filename)
     if format is None:
         raise NotImplementedError('format cannot be parsed, please check filetype')
-    files = {'read_file' : open(filename, 'rb')}
+    compressed_filename = get_compressed_file(read_filename)
+    files = {'read_file' : open(compressed_filename, 'rb')}
     data = {'read_index': index, 'read_format' : format}
     output = get_response('read', files, data, debug=debug)
+    os.remove(compressed_filename)
     if debug:
-        print(output)
+        print(files, data, output)
     output = json_tricks.loads(output)
     if isinstance(output, dict):
         output = atomtools.types.ExtDict(output)
@@ -127,18 +142,18 @@ def get_write_content(arrays, format=None, debug=False, **kwargs):
     return output
 
 
-def write(filename, arrays, format=None, debug=False):
-    format = format or atomtools.filetype(filename)
+def write(write_filename, arrays, format=None, debug=False):
+    format = format or atomtools.filetype(write_filename)
     assert format is not None, 'We cannot determine your filetype. Supports {0}'.format(\
         ' '.join(SUPPORT_WRITE_FORMATS))
     assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(format)
-    if filename == '-':
+    if write_filename == '-':
         preview(arrays, format=format, debug=debug)
     else:
-        # arrays['filename'] = filename
-        kwargs = {'write_filename' : filename}
+        # arrays['write_filename'] = filename
+        kwargs = {'write_filename' : write_filename}
         output = get_write_content(arrays, format=format, debug=debug, **kwargs)
-        with open(filename, 'w') as fd:
+        with open(write_filename, 'w') as fd:
             fd.write(output)
 
 
@@ -151,10 +166,12 @@ def convert(read_filename, write_filename, index=-1,\
     write_format = write_format or atomtools.filetype(write_filename)
     assert write_format is not None, \
         'We cannot determine your filetype of file: {0}'.format(write_filename)
-    files = {'read_file' : open(read_filename, 'rb')}
+    compressed_filename = get_compressed_file(read_filename)
+    files = {'read_file' : open(compressed_filename, 'rb')}
     data = {'read_index' : index, 'read_format' : read_format, \
             'write_filename' : write_filename, 'write_format' : write_format}
     output = get_response('convert', files, data, debug=debug)
+    os.remove(compressed_filename)
     if write_filename == '-':
         __preview__(output)
     else:
