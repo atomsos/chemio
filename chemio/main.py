@@ -28,11 +28,8 @@ SUPPORT_READ_EXTENSIONS = CONF.get("default", "support_read_extensions").strip()
 SUPPORT_WRITE_FORMATS = CONF.get("default", "support_write_formats").strip().split()
 
 
-if os.environ.get("CHEMIO_SERVER_URLS", None):
-    CHEMIO_SERVER_URLS = os.environ.get("CHEMIO_SERVER_URLS")
-else:
-    CHEMIO_SERVER_URLS = CONF.get("default", "server")
-    COMPRESSION = atomtools.file.compress_command
+CHEMIO_SERVER_URLS = os.environ.get("CHEMIO_SERVER_URLS", CONF.get("default", "server"))
+USING_COMPRESSION = bool(os.environ.get("CHEMIO_USING_COMPRESSION", 'True'))
 
 
 global SERVER
@@ -77,14 +74,14 @@ def get_response(method, files=None, data=None, debug=False):
 
 
 def get_compressed_file(filename):
-    if atomtools.file.is_compressed_file(filename):
-        return filename
+    if atomtools.file.is_compressed_file(filename) or not USING_COMPRESSION:
+        return filename, False
     compressed_filename = filename+'.gz'
     compressed_filename = os.path.join('/tmp', os.path.basename(compressed_filename))
     with open(filename, 'rb') as f_in:
         with gzip.open(compressed_filename, 'wb', compresslevel=3) as f_out:
             f_out.write(f_in.read())
-    return compressed_filename
+    return compressed_filename, True
 
 
 
@@ -95,11 +92,12 @@ def read(read_filename, index=-1, format=None, debug=False):
     format = format or atomtools.filetype(read_filename)
     if format is None:
         raise NotImplementedError('format cannot be parsed, please check filetype')
-    compressed_filename = get_compressed_file(read_filename)
+    compressed_filename, will_be_removed = get_compressed_file(read_filename)
     files = {'read_file' : open(compressed_filename, 'rb')}
     data = {'read_index': index, 'read_format' : format}
     output = get_response('read', files, data, debug=debug)
-    os.remove(compressed_filename)
+    if will_be_removed:
+        os.remove(compressed_filename)
     if debug:
         print(files, data, output)
     output = json_tricks.loads(output)
