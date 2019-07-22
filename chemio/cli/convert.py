@@ -109,5 +109,5 @@ class CLICommand:
         #     write(args.output, configs, format=args.output_format)
         convert(args.input, args.output, args.image_number,
                 args.input_format, args.output_format,
-                format_nocheck=args.nocheck.
+                format_nocheck=args.nocheck,
                 debug=args.debug)
