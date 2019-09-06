@@ -41,11 +41,12 @@ def test():
     testfilenames = os.listdir(TESTDIR)
     random.shuffle(testfilenames)
     for filename in testfilenames[:10]:
+        print('-'*50+'\n', filename)
         filename = os.path.join(TESTDIR, filename)
         if not os.path.isfile(filename):
             continue
         arrays = chemio.read(filename, debug=True)
-        print('-'*50+'\n', arrays)
+        print(arrays)
     # test write
     for _format in SUPPORT_WRITE_FORMATS:
         print('-'*50+'\n', _format)
