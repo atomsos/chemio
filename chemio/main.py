@@ -15,9 +15,14 @@ import urllib.parse
 import configparser
 import gzip
 
-import atomtools.file, atomtools.types, atomtools.filetype
+import atomtools.file
+import atomtools.types
+import atomtools.filetype
+import atomtools.types
+from collections import OrderedDict
 import json_tricks
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 BASEDIR = os.path.dirname(os.path.abspath(__file__))
 CONFIGFILE = os.path.join(BASEDIR, 'config.conf')
@@ -37,26 +42,65 @@ SERVER = None
 
 
 
+def server_available(server):
+    """
+    test if a server is available
+    Input:
+        * server: str, a hostname/ip/url
+    Output:
+        * available: bool, True if server is available
+    """
+    netloc = urllib.parse.urlsplit(server).netloc.split(":")[0]
+    if os.system('ping  -W 1 -c 1 {0} > /dev/null 2>&1 || \
+                  ping6 -W 1 -c 1 {0} > /dev/null 2>&1'.format(netloc)) == 0:
+        return server, True
+    return server, False
+
+
 def select_server(servers=CHEMIO_SERVER_URLS, debug=False):
+    """
+    give out a available server
+    Input:
+        * servers: list/str, list of servers in list or string format
+        * debug: boolean
+    Output:
+        * the best server available
+    """
     global SERVER
+    executor = ThreadPoolExecutor(max_workers=10)
     if SERVER is not None:
         return SERVER
     if isinstance(servers, str):
         servers = servers.strip().split()
     if len(servers) == 1:
         return servers[0]
+    all_tasks = []
+    server_availability = OrderedDict()
     for server in servers:
-        netloc = urllib.parse.urlsplit(server).netloc.split(":")[0]
-        if os.system('ping  -W 1 -c 1 {0} > /dev/null 2>&1 || \
-                ping6 -W 1 -c 1 {0} > /dev/null 2>&1'.format(netloc)) == 0:
-            SERVER = server
-            if debug:
-                print('server:', server)
+        all_tasks.append(executor.submit(server_available, server))
+        server_availability[server] = False
+    for task in as_completed(all_tasks):
+        server, available = task.result()
+        server_availability[server] = available
+    if debug:
+        print(server_availability)
+    for server in servers:
+        if server_availability[server]:
             return server
     raise ValueError("All servers are not available")
 
 
 def get_response(method, files=None, data=None, debug=False):
+    """
+    get response from server
+    Input:
+        * method: string, read/write/convert
+        * files: dict/None, list of files be uploaded
+        * data: dict, dictionary to be transferred
+        * debug: boolean, default False
+    Output:
+        * response from server as string
+    """
     assert method in ['read', 'write', 'convert']
     import requests
     server = select_server(debug=debug)
@@ -74,6 +118,13 @@ def get_response(method, files=None, data=None, debug=False):
 
 
 def get_compressed_file(filename):
+    """
+    compress file before uploading
+    Input:
+        * filename: string, the file to be compressed
+    Output:
+        compressed_filename, True/False
+    """
     if atomtools.file.is_compressed_file(filename) or not USING_COMPRESSION:
         return filename, False
     compressed_filename = filename+'.gz'
