@@ -15,7 +15,7 @@ import urllib.parse
 import configparser
 import gzip
 
-import atomtools.file
+import atomtools.fileutil
 import atomtools.types
 import atomtools.filetype
 import atomtools.types
@@ -125,7 +125,7 @@ def get_compressed_file(filename):
     Output:
         compressed_filename, True/False
     """
-    if atomtools.file.is_compressed_file(filename) or not USING_COMPRESSION:
+    if atomtools.fileutil.is_compressed_file(filename) or not USING_COMPRESSION:
         return filename, False
     compressed_filename = filename+'.gz'
     compressed_filename = os.path.join('/tmp', os.path.basename(compressed_filename))

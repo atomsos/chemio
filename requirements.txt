@@ -1,3 +1,3 @@
-json_tricks>=3.13.1
 requests>=2.22.0
-atomtools>=1.8.0
+json_tricks>=3.13.1
+atomtools>=1.8.1
