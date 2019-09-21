@@ -6,6 +6,7 @@ chemio info cli
 """
 import json_tricks
 import chemio
+import re
 
 
 # from chemio.utils import import_module, FileNotFoundError
@@ -29,20 +30,26 @@ class CLICommand:
     def add_arguments(parser):
         parser.add_argument('filename', nargs='*',
                             help='Name of file to determine format for.')
-        parser.add_argument('-i', '--index' , default=-1,
+        parser.add_argument('-i', '--index', default=-1,
                             help='Index to show')
         parser.add_argument('-v', '--verbose', action='store_true',
                             help='Show more information about files.')
         parser.add_argument('-k', '--key',
                             help='key to show')
+        parser.add_argument('-d', '--data', nargs='*',
+                            help='data to be posted, key=val format')
 
     @staticmethod
     def run(args):
         if not args.filename:
             raise ValueError("No filename is given")
+        if args.debug:
+            print(args)
+            print(data)
         for filename in args.filename:
             arrays = chemio.read(filename, index=args.index,
                                  format_nocheck=args.nocheck,
+                                 data=data,
                                  debug=args.debug)
             if args.verbose:
                 print(arrays)
@@ -53,4 +60,3 @@ class CLICommand:
                     print(filename, None)
             else:
                 print(json_tricks.dumps(arrays, indent=4))
-   

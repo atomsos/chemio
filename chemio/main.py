@@ -8,32 +8,33 @@ GSIO: IO using server
 """
 
 
-
 import os
 import re
 import urllib.parse
 import configparser
 import gzip
-
-import atomtools.fileutil
-import atomtools.types
-import atomtools.filetype
-import atomtools.types
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json_tricks
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import atomtools.fileutil
+import atomtools.filetype
+import atomtools.types
+
 
 BASEDIR = os.path.dirname(os.path.abspath(__file__))
 CONFIGFILE = os.path.join(BASEDIR, 'config.conf')
 
 CONF = configparser.ConfigParser()
 CONF.read(CONFIGFILE)
-SUPPORT_READ_EXTENSIONS = CONF.get("default", "support_read_extensions").strip().split()
-SUPPORT_WRITE_FORMATS = CONF.get("default", "support_write_formats").strip().split()
+SUPPORT_READ_EXTENSIONS = CONF.get(
+    "default", "support_read_extensions").strip().split()
+SUPPORT_WRITE_FORMATS = CONF.get(
+    "default", "support_write_formats").strip().split()
 
 
-CHEMIO_SERVER_URLS = os.environ.get("CHEMIO_SERVER_URLS", CONF.get("default", "server"))
+CHEMIO_SERVER_URLS = os.environ.get(
+    "CHEMIO_SERVER_URLS", CONF.get("default", "server"))
 USING_COMPRESSION = bool(os.environ.get("CHEMIO_USING_COMPRESSION", 'True'))
 
 
@@ -41,6 +42,11 @@ global SERVER
 SERVER = None
 
 
+
+def assemble_data(data):
+    if isinstance(data, dict):
+        return ';'.join([f"{key}={val}" for key, val in data.items()])
+    return data
 
 def server_available(server):
     """
@@ -116,7 +122,6 @@ def get_response(method, files=None, data=None, debug=False):
     return res.text
 
 
-
 def get_compressed_file(filename):
     """
     compress file before uploading
@@ -128,25 +133,31 @@ def get_compressed_file(filename):
     if atomtools.fileutil.is_compressed_file(filename) or not USING_COMPRESSION:
         return filename, False
     compressed_filename = filename+'.gz'
-    compressed_filename = os.path.join('/tmp', os.path.basename(compressed_filename))
+    compressed_filename = os.path.join(
+        '/tmp', os.path.basename(compressed_filename))
     with open(filename, 'rb') as f_in:
         with gzip.open(compressed_filename, 'wb', compresslevel=3) as f_out:
             f_out.write(f_in.read())
     return compressed_filename, True
 
 
-
-def read(read_filename, index=-1, format=None, format_nocheck=False, debug=False):
+def read(read_filename, index=-1, format=None, format_nocheck=False,
+         data=None, debug=False):
     assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
     assert isinstance(index, int) or isinstance(index, str) and \
         re.match('^[+-:0-9]$', index), '{0} is not a int or :'.format(index)
     if not format_nocheck:
         format = format or atomtools.filetype.filetype(read_filename)
     if format is None:
-        raise NotImplementedError('format cannot be parsed, please check filetype')
+        raise NotImplementedError(
+            'format cannot be parsed, please check filetype')
     compressed_filename, remove_flag = get_compressed_file(read_filename)
-    files = {'read_file' : open(compressed_filename, 'rb')}
-    data = {'read_index': index, 'read_format' : format}
+    files = {'read_file': open(compressed_filename, 'rb')}
+    data = data or dict()
+    assert isinstance(data, dict)
+    data = assemble_data(data)
+    data = {'data': data, '__gaseio_read_index': index,
+            '__gaseio_read_format': format}
     output = get_response('read', files, data, debug=debug)
     if remove_flag:
         os.remove(compressed_filename)
@@ -162,17 +173,20 @@ def read(read_filename, index=-1, format=None, format_nocheck=False, debug=False
 
 def check_multiframe(arrays, format):
     assert format in atomtools.filetype.list_supported_formats(), \
-        '{0} not in {1}'.format(format, atomtools.filetype.list_supported_formats())
+        '{0} not in {1}'.format(
+            format, atomtools.filetype.list_supported_formats())
     if isinstance(arrays, dict) or isinstance(arrays, list)\
-        and atomtools.filetype.support_multiframe(format):
+            and atomtools.filetype.support_multiframe(format):
         return True
     return False
 
 
-def get_write_content(arrays, format=None, debug=False, **kwargs):
-    data = dict()
+def get_write_content(arrays, format=None, data=None, debug=False, **kwargs):
     assert format is not None, 'format cannot be none when filename is None'
-    data['write_format'] = format
+    data = data or dict()
+    assert isinstance(data, dict)
+    data = assemble_data(data)
+    data = {'data': data, '__gaseio_write_format': format}
     if arrays.__class__.__module__ == 'ase.atoms':
         calc_arrays = None
         if arrays.calc:
@@ -183,47 +197,57 @@ def get_write_content(arrays, format=None, debug=False, **kwargs):
             arrays['calc_arrays'] = calc_arrays
     if not check_multiframe(arrays, format):
         if debug:
-            print('format {0} not support list array, turns to last image'.format(format))
+            print(
+                'format {0} not support list array, turns to last image'.format(format))
         arrays = arrays[-1]
     if debug:
         print(kwargs)
     arrays.update(kwargs)
-    data.update({'arrays' : json_tricks.dumps(arrays)})
+    data = {'data': data, 'arrays': json_tricks.dumps(arrays)}
     output = get_response('write', None, data=data, debug=debug)
     return output
 
 
-def write(write_filename, arrays, format=None, format_nocheck=False, debug=False):
+def write(write_filename, arrays, format=None, format_nocheck=False, data=None, debug=False):
     if not format_nocheck:
         format = format or atomtools.filetype.filetype(write_filename)
-        assert format is not None, 'We cannot determine your filetype. Supports {0}'.format(\
+        assert format is not None, 'We cannot determine your filetype. Supports {0}'.format(
             ' '.join(SUPPORT_WRITE_FORMATS))
-        assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(format)
+        assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(
+            format)
     if write_filename == '-':
-        preview(arrays, format=format, debug=debug)
+        preview(arrays, format=format, data=data, debug=debug)
     else:
         # arrays['write_filename'] = filename
-        kwargs = {'write_filename' : write_filename}
-        output = get_write_content(arrays, format=format, debug=debug, **kwargs)
+        kwargs = {'__gaseio_write_filename': write_filename}
+        output = get_write_content(
+            arrays, format=format, data=data, debug=debug, **kwargs)
         with open(write_filename, 'w') as fd:
             fd.write(output)
 
 
 def convert(read_filename, write_filename, index=-1,
             read_format=None, write_format=None,
-            format_nocheck=False, debug=False):
+            format_nocheck=False, data=None, debug=False):
     assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
     if not format_nocheck:
         read_format = read_format or atomtools.filetype.filetype(read_filename)
         assert read_format is not None, \
-            'We cannot determine your filetype of file: {0}'.format(read_filename)
+            'We cannot determine your filetype of file: {0}'.format(
+                read_filename)
     write_format = write_format or atomtools.filetype.filetype(write_filename)
     assert write_format is not None, \
         'We cannot determine your filetype of file: {0}'.format(write_filename)
     compressed_filename, remove_flag = get_compressed_file(read_filename)
-    files = {'read_file' : open(compressed_filename, 'rb')}
-    data = {'read_index' : index, 'read_format' : read_format, \
-            'write_filename' : write_filename, 'write_format' : write_format}
+    files = {'read_file': open(compressed_filename, 'rb')}
+    data = data or dict()
+    assert isinstance(data, dict)
+    data = assemble_data(data)
+    data = {'data': data,
+            '__gaseio_read_index': index,
+            '__gaseio_read_format': read_format,
+            '__gaseio_write_filename': write_filename,
+            '__gaseio_write_format': write_format}
     output = get_response('convert', files, data, debug=debug)
     if remove_flag:
         os.remove(compressed_filename)
@@ -234,15 +258,12 @@ def convert(read_filename, write_filename, index=-1,
             fd.write(output)
 
 
-
-def preview(arrays, format='xyz', debug=False):
-    output = get_write_content(arrays, format=format, debug=debug)
+def preview(arrays, format='xyz', data=None, debug=False):
+    output = get_write_content(arrays, format=format, data=data, debug=debug)
     __preview__(output)
-
 
 
 def __preview__(output):
     print('----start----')
     print(output)
     print('----end------')
-
