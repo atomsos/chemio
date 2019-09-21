@@ -1,6 +1,14 @@
-import os
+"""
+
+
+cli for convert
+
+
+"""
+
 
 from chemio.main import convert
+from . import utils
 
 
 class CLICommand:
@@ -15,7 +23,7 @@ class CLICommand:
         add = parser.add_argument
         add('-v', '--verbose', action='store_true',
             help='Print names of converted files')
-        add('input',# nargs='+',
+        add('input',  # nargs='+',
             metavar='input-file')
         add('-i', '--input-format', metavar='FORMAT',
             help='Specify input FORMAT')
@@ -31,6 +39,10 @@ class CLICommand:
             'the back) or a range: start:stop:step, where the '
             '":step" part can be left out - default values are '
             '0:nimages:1.')
+        add('--data', nargs='*',
+            help='data to be posted, key=val format')
+        add('--calc_data', nargs='*',
+            help='calc data to be posted, key=val format')
         # add('-e', '--exec-code',
         #     help='Python code to execute on each atoms before '
         #     'writing it to output file. The Atoms object is '
@@ -52,8 +64,6 @@ class CLICommand:
 
     @staticmethod
     def run(args, parser):
-        if args.debug:
-            print(args)
         if args.verbose:
             print(', '.join(args.input), '->', args.output)
         # if args.arrays:
@@ -107,7 +117,12 @@ class CLICommand:
         #     if args.debug:
         #         print('{0} images and not split'.format(len(configs)))
         #     write(args.output, configs, format=args.output_format)
+        data = utils.parse_args_data(args.data)
+        calc_data = utils.parse_args_data(args.calc_data)
+        if args.debug:
+            print(args)
+            print(data, calc_data)
         convert(args.input, args.output, args.image_number,
                 args.input_format, args.output_format,
                 format_nocheck=args.nocheck,
-                debug=args.debug)
+                data=data, calc_data=calc_data, debug=args.debug)

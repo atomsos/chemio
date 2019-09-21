@@ -44,9 +44,8 @@ SERVER = None
 
 
 def assemble_data(data):
-    if isinstance(data, dict):
-        return ';'.join([f"{key}={val}" for key, val in data.items()])
-    return data
+    assert isinstance(data, dict)
+    return ';'.join([f"{key}={val}" for key, val in data.items()])
 
 def server_available(server):
     """
@@ -96,7 +95,7 @@ def select_server(servers=CHEMIO_SERVER_URLS, debug=False):
     raise ValueError("All servers are not available")
 
 
-def get_response(method, files=None, data=None, debug=False):
+def get_response(method, files=None, data=None, calc_data=None, debug=False):
     """
     get response from server
     Input:
@@ -142,7 +141,7 @@ def get_compressed_file(filename):
 
 
 def read(read_filename, index=-1, format=None, format_nocheck=False,
-         data=None, debug=False):
+         data=None, calc_data=None, debug=False):
     assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
     assert isinstance(index, int) or isinstance(index, str) and \
         re.match('^[+-:0-9]$', index), '{0} is not a int or :'.format(index)
@@ -154,9 +153,12 @@ def read(read_filename, index=-1, format=None, format_nocheck=False,
     compressed_filename, remove_flag = get_compressed_file(read_filename)
     files = {'read_file': open(compressed_filename, 'rb')}
     data = data or dict()
-    assert isinstance(data, dict)
     data = assemble_data(data)
-    data = {'data': data, '__gaseio_read_index': index,
+    calc_data = calc_data or dict()
+    calc_data = assemble_data(calc_data)
+    data = {'data': data, 
+            'calc_data' : calc_data,
+            '__gaseio_read_index': index,
             '__gaseio_read_format': format}
     output = get_response('read', files, data, debug=debug)
     if remove_flag:
@@ -181,12 +183,15 @@ def check_multiframe(arrays, format):
     return False
 
 
-def get_write_content(arrays, format=None, data=None, debug=False, **kwargs):
+def get_write_content(arrays, format=None, data=None, calc_data=None, debug=False, **kwargs):
     assert format is not None, 'format cannot be none when filename is None'
     data = data or dict()
-    assert isinstance(data, dict)
     data = assemble_data(data)
-    data = {'data': data, '__gaseio_write_format': format}
+    calc_data = calc_data or dict()
+    calc_data = assemble_data(calc_data)
+    data = {'data': data, 
+            'calc_data' : calc_data,
+            '__gaseio_write_format': format}
     if arrays.__class__.__module__ == 'ase.atoms':
         calc_arrays = None
         if arrays.calc:
@@ -204,11 +209,11 @@ def get_write_content(arrays, format=None, data=None, debug=False, **kwargs):
         print(kwargs)
     arrays.update(kwargs)
     data = {'data': data, 'arrays': json_tricks.dumps(arrays)}
-    output = get_response('write', None, data=data, debug=debug)
+    output = get_response('write', None, data=data, calc_data=calc_data, debug=debug)
     return output
 
 
-def write(write_filename, arrays, format=None, format_nocheck=False, data=None, debug=False):
+def write(write_filename, arrays, format=None, format_nocheck=False, data=None, calc_data=None, debug=False):
     if not format_nocheck:
         format = format or atomtools.filetype.filetype(write_filename)
         assert format is not None, 'We cannot determine your filetype. Supports {0}'.format(
@@ -216,19 +221,19 @@ def write(write_filename, arrays, format=None, format_nocheck=False, data=None, 
         assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(
             format)
     if write_filename == '-':
-        preview(arrays, format=format, data=data, debug=debug)
+        preview(arrays, format=format, data=data, calc_data=calc_data, debug=debug)
     else:
         # arrays['write_filename'] = filename
         kwargs = {'__gaseio_write_filename': write_filename}
         output = get_write_content(
-            arrays, format=format, data=data, debug=debug, **kwargs)
+            arrays, format=format, data=data, calc_data=calc_data, debug=debug, **kwargs)
         with open(write_filename, 'w') as fd:
             fd.write(output)
 
 
 def convert(read_filename, write_filename, index=-1,
             read_format=None, write_format=None,
-            format_nocheck=False, data=None, debug=False):
+            format_nocheck=False, data=None, calc_data=None, debug=False):
     assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
     if not format_nocheck:
         read_format = read_format or atomtools.filetype.filetype(read_filename)
@@ -241,9 +246,11 @@ def convert(read_filename, write_filename, index=-1,
     compressed_filename, remove_flag = get_compressed_file(read_filename)
     files = {'read_file': open(compressed_filename, 'rb')}
     data = data or dict()
-    assert isinstance(data, dict)
     data = assemble_data(data)
+    calc_data = calc_data or dict()
+    calc_data = assemble_data(calc_data)
     data = {'data': data,
+            'calc_data' : calc_data,
             '__gaseio_read_index': index,
             '__gaseio_read_format': read_format,
             '__gaseio_write_filename': write_filename,
@@ -258,8 +265,8 @@ def convert(read_filename, write_filename, index=-1,
             fd.write(output)
 
 
-def preview(arrays, format='xyz', data=None, debug=False):
-    output = get_write_content(arrays, format=format, data=data, debug=debug)
+def preview(arrays, format='xyz', data=None, calc_data=None, debug=False):
+    output = get_write_content(arrays, format=format, data=data, calc_data=calc_data, debug=debug)
     __preview__(output)
 
 
