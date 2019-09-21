@@ -158,8 +158,9 @@ def read(read_filename, index=-1, format=None, format_nocheck=False,
     calc_data = assemble_data(calc_data)
     data = {'data': data, 
             'calc_data' : calc_data,
-            '__gaseio_read_index': index,
-            '__gaseio_read_format': format}
+            'read_index': index,
+            'read_format': format,
+            'read_filename' : os.path.basename(read_filename)}
     output = get_response('read', files, data, debug=debug)
     if remove_flag:
         os.remove(compressed_filename)
@@ -191,7 +192,7 @@ def get_write_content(arrays, format=None, data=None, calc_data=None, debug=Fals
     calc_data = assemble_data(calc_data)
     data = {'data': data, 
             'calc_data' : calc_data,
-            '__gaseio_write_format': format}
+            'write_format': format}
     if arrays.__class__.__module__ == 'ase.atoms':
         calc_arrays = None
         if arrays.calc:
@@ -224,7 +225,7 @@ def write(write_filename, arrays, format=None, format_nocheck=False, data=None, 
         preview(arrays, format=format, data=data, calc_data=calc_data, debug=debug)
     else:
         # arrays['write_filename'] = filename
-        kwargs = {'__gaseio_write_filename': write_filename}
+        kwargs = {'write_filename': write_filename}
         output = get_write_content(
             arrays, format=format, data=data, calc_data=calc_data, debug=debug, **kwargs)
         with open(write_filename, 'w') as fd:
@@ -251,10 +252,10 @@ def convert(read_filename, write_filename, index=-1,
     calc_data = assemble_data(calc_data)
     data = {'data': data,
             'calc_data' : calc_data,
-            '__gaseio_read_index': index,
-            '__gaseio_read_format': read_format,
-            '__gaseio_write_filename': write_filename,
-            '__gaseio_write_format': write_format}
+            'read_index': index,
+            'read_format': read_format,
+            'write_filename': write_filename,
+            'write_format': write_format}
     output = get_response('convert', files, data, debug=debug)
     if remove_flag:
         os.remove(compressed_filename)
