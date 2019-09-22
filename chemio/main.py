@@ -42,10 +42,10 @@ global SERVER
 SERVER = None
 
 
-
 def assemble_data(data):
     assert isinstance(data, dict)
     return ';'.join([f"{key}={val}" for key, val in data.items()])
+
 
 def server_available(server):
     """
@@ -156,11 +156,11 @@ def read(read_filename, index=-1, format=None, format_nocheck=False,
     data = assemble_data(data)
     calc_data = calc_data or dict()
     calc_data = assemble_data(calc_data)
-    data = {'data': data, 
-            'calc_data' : calc_data,
+    data = {'data': data,
+            'calc_data': calc_data,
             'read_index': index,
             'read_format': format,
-            'read_filename' : os.path.basename(read_filename)}
+            'read_filename': os.path.basename(read_filename)}
     output = get_response('read', files, data, debug=debug)
     if remove_flag:
         os.remove(compressed_filename)
@@ -186,13 +186,6 @@ def check_multiframe(arrays, format):
 
 def get_write_content(arrays, format=None, data=None, calc_data=None, debug=False, **kwargs):
     assert format is not None, 'format cannot be none when filename is None'
-    data = data or dict()
-    data = assemble_data(data)
-    calc_data = calc_data or dict()
-    calc_data = assemble_data(calc_data)
-    data = {'data': data, 
-            'calc_data' : calc_data,
-            'write_format': format}
     if arrays.__class__.__module__ == 'ase.atoms':
         calc_arrays = None
         if arrays.calc:
@@ -209,8 +202,17 @@ def get_write_content(arrays, format=None, data=None, calc_data=None, debug=Fals
     if debug:
         print(kwargs)
     arrays.update(kwargs)
-    data = {'data': data, 'arrays': json_tricks.dumps(arrays)}
-    output = get_response('write', None, data=data, calc_data=calc_data, debug=debug)
+
+    data = data or dict()
+    data = assemble_data(data)
+    calc_data = calc_data or dict()
+    calc_data = assemble_data(calc_data)
+    data = {'data': data,
+            'calc_data': calc_data,
+            'write_format': format,
+            'arrays': json_tricks.dumps(arrays)}
+    output = get_response('write', None, data=data,
+                          calc_data=calc_data, debug=debug)
     return output
 
 
@@ -222,7 +224,8 @@ def write(write_filename, arrays, format=None, format_nocheck=False, data=None, 
         assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(
             format)
     if write_filename == '-':
-        preview(arrays, format=format, data=data, calc_data=calc_data, debug=debug)
+        preview(arrays, format=format, data=data,
+                calc_data=calc_data, debug=debug)
     else:
         # arrays['write_filename'] = filename
         kwargs = {'write_filename': write_filename}
@@ -251,7 +254,7 @@ def convert(read_filename, write_filename, index=-1,
     calc_data = calc_data or dict()
     calc_data = assemble_data(calc_data)
     data = {'data': data,
-            'calc_data' : calc_data,
+            'calc_data': calc_data,
             'read_index': index,
             'read_format': read_format,
             'write_filename': write_filename,
@@ -267,7 +270,8 @@ def convert(read_filename, write_filename, index=-1,
 
 
 def preview(arrays, format='xyz', data=None, calc_data=None, debug=False):
-    output = get_write_content(arrays, format=format, data=data, calc_data=calc_data, debug=debug)
+    output = get_write_content(
+        arrays, format=format, data=data, calc_data=calc_data, debug=debug)
     __preview__(output)
 
 
