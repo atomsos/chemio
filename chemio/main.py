@@ -23,6 +23,7 @@ import atomtools.filetype
 import atomtools.types
 
 
+logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 

@@ -5,7 +5,6 @@ chemio info cli
 
 """
 import json_tricks
-import chemio
 from . import utils
 
 
@@ -48,14 +47,13 @@ class CLICommand:
             raise ValueError("No filename is given")
         data = utils.parse_args_data(args.data)
         calc_data = utils.parse_args_data(args.calc_data)
+        import chemio, logging
         if args.debug:
-            print(args)
-            print(data, calc_data)
+            chemio.main.logger.setLevel(logging.DEBUG)
         for filename in args.filename:
             arrays = chemio.read(filename, index=args.index,
                                  format_nocheck=args.nocheck,
-                                 data=data, calc_data=calc_data,
-                                 debug=args.debug)
+                                 data=data, calc_data=calc_data)
             if args.verbose:
                 print(arrays)
             if args.key:
