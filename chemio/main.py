@@ -15,12 +15,16 @@ import configparser
 import gzip
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
 import json_tricks
 
 import atomtools.fileutil
 import atomtools.filetype
 import atomtools.types
 
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 BASEDIR = os.path.dirname(os.path.abspath(__file__))
 CONFIGFILE = os.path.join(BASEDIR, 'config.conf')
@@ -37,7 +41,7 @@ CHEMIO_SERVER_URLS = os.environ.get(
     "CHEMIO_SERVER_URLS", CONF.get("default", "server"))
 USING_COMPRESSION = bool(os.environ.get("CHEMIO_USING_COMPRESSION", 'True'))
 
-
+logger.debug(f"CHEMIO_SERVER_URLS: {CHEMIO_SERVER_URLS}")
 global SERVER
 SERVER = None
 
@@ -62,7 +66,7 @@ def server_available(server):
     return server, False
 
 
-def select_server(servers=CHEMIO_SERVER_URLS, debug=False):
+def select_server(servers=CHEMIO_SERVER_URLS):
     """
     give out a available server
     Input:
@@ -87,15 +91,14 @@ def select_server(servers=CHEMIO_SERVER_URLS, debug=False):
     for task in as_completed(all_tasks):
         server, available = task.result()
         server_availability[server] = available
-    if debug:
-        print(server_availability)
+    logger.debug(f"server_availability: {server_availability}")
     for server in servers:
         if server_availability[server]:
             return server
     raise ValueError("All servers are not available")
 
 
-def get_response(method, files=None, data=None, calc_data=None, debug=False):
+def get_response(method, files=None, data=None, calc_data=None):
     """
     get response from server
     Input:
@@ -108,16 +111,16 @@ def get_response(method, files=None, data=None, calc_data=None, debug=False):
     """
     assert method in ['read', 'write', 'convert']
     import requests
-    server = select_server(debug=debug)
+    server = select_server()
     data = data or dict()
     url = server + '/' + method
     if server.endswith('/'):
         url = server + method
     data['method'] = method
     res = requests.post(url, files=files, data=data)
-    if debug:
-        print('\n\nheader:\n{0}'.format(res.headers))
-        print('\n\ntext:\n{0}'.format(res.text))
+    logger.debug(f"data: {data}")
+    logger.debug(f'header: {res.headers}')
+    logger.debug(f'text: {res.text}')
     return res.text
 
 
@@ -141,7 +144,7 @@ def get_compressed_file(filename):
 
 
 def read(read_filename, index=-1, format=None, format_nocheck=False,
-         data=None, calc_data=None, debug=False):
+         data=None, calc_data=None):
     assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
     assert isinstance(index, int) or isinstance(index, str) and \
         re.match('^[+-:0-9]$', index), '{0} is not a int or :'.format(index)
@@ -161,11 +164,10 @@ def read(read_filename, index=-1, format=None, format_nocheck=False,
             'read_index': index,
             'read_format': format,
             'read_filename': os.path.basename(read_filename)}
-    output = get_response('read', files, data, debug=debug)
+    output = get_response('read', files, data)
     if remove_flag:
         os.remove(compressed_filename)
-    if debug:
-        print(files, data, output)
+    logger.debug(f"{files}, {data}, {output}")
     output = json_tricks.loads(output)
     if isinstance(output, dict):
         output = atomtools.types.ExtDict(output)
@@ -184,7 +186,7 @@ def check_multiframe(arrays, format):
     return False
 
 
-def get_write_content(arrays, format=None, data=None, calc_data=None, debug=False, **kwargs):
+def get_write_content(arrays, write_filename=None, format=None, data=None, calc_data=None):
     assert format is not None, 'format cannot be none when filename is None'
     if arrays.__class__.__module__ == 'ase.atoms':
         calc_arrays = None
@@ -195,13 +197,9 @@ def get_write_content(arrays, format=None, data=None, calc_data=None, debug=Fals
         if calc_arrays:
             arrays['calc_arrays'] = calc_arrays
     if not check_multiframe(arrays, format):
-        if debug:
-            print(
-                'format {0} not support list array, turns to last image'.format(format))
+        logger.debug(
+            'format {0} not support list array, turns to last image'.format(format))
         arrays = arrays[-1]
-    if debug:
-        print(kwargs)
-    arrays.update(kwargs)
 
     data = data or dict()
     data = assemble_data(data)
@@ -209,35 +207,35 @@ def get_write_content(arrays, format=None, data=None, calc_data=None, debug=Fals
     calc_data = assemble_data(calc_data)
     data = {'data': data,
             'calc_data': calc_data,
+            'write_filename': write_filename,
             'write_format': format,
             'arrays': json_tricks.dumps(arrays)}
     output = get_response('write', None, data=data,
-                          calc_data=calc_data, debug=debug)
+                          calc_data=calc_data)
     return output
 
 
-def write(write_filename, arrays, format=None, format_nocheck=False, data=None, calc_data=None, debug=False):
+def write(arrays, write_filename=None, format=None, format_nocheck=False, data=None, calc_data=None):
     if not format_nocheck:
         format = format or atomtools.filetype.filetype(write_filename)
         assert format is not None, 'We cannot determine your filetype. Supports {0}'.format(
             ' '.join(SUPPORT_WRITE_FORMATS))
         assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(
             format)
-    if write_filename == '-':
+    if write_filename in [None, '-']:
         preview(arrays, format=format, data=data,
-                calc_data=calc_data, debug=debug)
+                calc_data=calc_data)
     else:
-        # arrays['write_filename'] = filename
-        kwargs = {'write_filename': write_filename}
         output = get_write_content(
-            arrays, format=format, data=data, calc_data=calc_data, debug=debug, **kwargs)
+            arrays, write_filename=write_filename, format=format,
+            data=data, calc_data=calc_data)
         with open(write_filename, 'w') as fd:
             fd.write(output)
 
 
 def convert(read_filename, write_filename, index=-1,
             read_format=None, write_format=None,
-            format_nocheck=False, data=None, calc_data=None, debug=False):
+            format_nocheck=False, data=None, calc_data=None):
     assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
     if not format_nocheck:
         read_format = read_format or atomtools.filetype.filetype(read_filename)
@@ -259,7 +257,7 @@ def convert(read_filename, write_filename, index=-1,
             'read_format': read_format,
             'write_filename': write_filename,
             'write_format': write_format}
-    output = get_response('convert', files, data, debug=debug)
+    output = get_response('convert', files, data)
     if remove_flag:
         os.remove(compressed_filename)
     if write_filename == '-':
@@ -269,13 +267,13 @@ def convert(read_filename, write_filename, index=-1,
             fd.write(output)
 
 
-def preview(arrays, format='xyz', data=None, calc_data=None, debug=False):
+def preview(arrays, format='xyz', data=None, calc_data=None):
     output = get_write_content(
-        arrays, format=format, data=data, calc_data=calc_data, debug=debug)
+        arrays, format=format, data=data, calc_data=calc_data)
     __preview__(output)
 
 
 def __preview__(output):
-    print('----start----')
+    logger.critical('----start----')
     print(output)
-    print('----end------')
+    logger.critical('----end------')
