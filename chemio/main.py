@@ -170,10 +170,10 @@ def read(read_filename, index=-1, format=None, format_nocheck=False,
         os.remove(compressed_filename)
     logger.debug(f"{files}, {data}, {output}")
     output = json_tricks.loads(output)
-    if isinstance(output, dict):
-        output = atomtools.types.ExtDict(output)
-    elif isinstance(output, list):
-        output = [atomtools.types.ExtDict(_) for _ in output]
+    # if isinstance(output, dict):
+    #     output = atomtools.types.ExtDict(output)
+    # elif isinstance(output, list):
+    #     output = [atomtools.types.ExtDict(_) for _ in output]
     return output
 
 
