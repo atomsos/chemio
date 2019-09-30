@@ -62,4 +62,4 @@ class CLICommand:
                 except:
                     print(filename, None)
             else:
-                print(json_tricks.dumps(arrays, indent=4))
+                print(json_tricks.dumps(arrays, allow_nan=True, indent=4))
