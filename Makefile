@@ -31,12 +31,27 @@ install:
 	cd /tmp; pip uninstall -yy $(Project); cd -; python setup.py install || python setup.py install --user
 
 test:
-	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py"
-	echo `which $(Project)`
+	# bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py"
+	# echo `which $(Project)`
 	# coverage run --source $(Project) `which $(Project)` -h
 	# coverage run --source $(Project) `which $(Project)` LISTSUBCOMMAND
 	# coverage run --source $(Project) `which $(Project)` LISTSUBCOMMAND | xargs -n 1 -I [] bash -c '(coverage run --source $(Project) `which $(Project)` [] -h >/dev/null 2>&1 || echo ERROR: [])'
+	make test_ase
+	make test_read
+	make test_write
 	coverage report -m
+
+
+test_ase:
+	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py --ase"
+
+
+test_read:
+	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py --read"
+
+
+test_write:
+	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py --write"
 
 
 test_travis:

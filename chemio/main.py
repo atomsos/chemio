@@ -278,3 +278,7 @@ def __preview__(output):
     logger.critical('----start----')
     print(output)
     logger.critical('----end------')
+
+
+def _setdebug():
+    logger.setLevel(logging.DEBUG)
