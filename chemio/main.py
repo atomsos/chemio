@@ -210,7 +210,7 @@ def get_write_content(arrays, write_filename=None, format=None, data=None, calc_
             'calc_data': calc_data,
             'write_filename': write_filename,
             'write_format': format,
-            'arrays': json_tricks.dumps(arrays)}
+            'arrays': json_tricks.dumps(arrays, allow_nan=True)}
     output = get_response('write', None, data=data,
                           calc_data=calc_data)
     return output
