@@ -6,6 +6,7 @@ chemio info cli
 """
 import json_tricks
 from . import utils
+from atomtools.types import ExtDict
 
 
 # from chemio.utils import import_module, FileNotFoundError
@@ -57,9 +58,10 @@ class CLICommand:
             if args.verbose:
                 print(arrays)
             if args.key:
+                print(filename)
                 try:
-                    print(filename, arrays[args.key])
+                    print(ExtDict(arrays)[args.key])
                 except:
-                    print(filename, None)
+                    print(None)
             else:
                 print(json_tricks.dumps(arrays, allow_nan=True, indent=4))
