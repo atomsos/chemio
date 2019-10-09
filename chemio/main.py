@@ -144,10 +144,33 @@ def get_compressed_file(filename):
     return compressed_filename, True
 
 
+def read_ase(filename, index=None, format=None,
+             parallel=True, **kwargs):
+    import ase.io
+    return ase.io.read(filename, index=index, format=format,
+                       parallel=parallel, **kwargs)
+
+
 def read(read_filename, index=-1, format=None, format_nocheck=False,
          data=None, calc_data=None):
+    """
+    read_filename:
+        filename of the file to be read.
+    index:
+        index of the file if it contains multiple images.
+    format:
+        format of the file
+    data:
+        appended data for arrays
+    calc_data:
+        appended data for calc_arrays
+    """
+    fname_match = re.match('^(.*)@([+-0-9:]+)$', read_filename):
+    if fname_match:
+        read_filename, index = fname_match[1], fname_match[2]
     assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
-    assert isinstance(index, int) or isinstance(index, str) and \
+    assert isinstance(index, int) or \
+        isinstance(index, str) and \
         re.match('^[+-:0-9]$', index), '{0} is not a int or :'.format(index)
     if not format_nocheck:
         format = format or atomtools.filetype.filetype(read_filename)
