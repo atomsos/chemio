@@ -165,7 +165,7 @@ def read(read_filename, index=-1, format=None, format_nocheck=False,
     calc_data:
         appended data for calc_arrays
     """
-    fname_match = re.match('^(.*)@([+-0-9:]+)$', read_filename):
+    fname_match = re.match('^(.*)@([0-9:+-]+)$', read_filename)
     if fname_match:
         read_filename, index = fname_match[1], fname_match[2]
     assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
