@@ -3,6 +3,9 @@
 
 Chemical file Input/Output
 
+Chemio: convert from one to another
+
+
 
 [![Build Status](https://travis-ci.org/atomse/chemio.svg?branch=master)](https://travis-ci.org/atomse/chemio)
 [![PyPI](https://img.shields.io/pypi/v/chemio.svg)](https://pypi.org/project/chemio)
@@ -12,8 +15,9 @@ Chemical file Input/Output
 
 ```python
 import chemio
-chemio.read(filename, index)
-chemio.write(filename, arrays, format)
+chemio.read(inputobj, index)
+chemio.write(filename, inputobj, format)
+chemio.convert(inputobj, input_index, input_format, output_filename, output_index, output_format)
 chemio.preview(arrays, format)
 ```
 

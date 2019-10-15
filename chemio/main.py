@@ -20,8 +20,7 @@ import json_tricks
 
 import atomtools.fileutil
 import atomtools.filetype
-import atomtools.types
-
+import atomtools.methods
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -44,7 +43,7 @@ USING_COMPRESSION = bool(os.environ.get("CHEMIO_USING_COMPRESSION", 'True'))
 
 logger.debug(f"CHEMIO_SERVER_URLS: {CHEMIO_SERVER_URLS}")
 global SERVER
-SERVER = None
+SERVER = CHEMIO_SERVER_URLS
 
 
 def assemble_data(data):
@@ -52,54 +51,54 @@ def assemble_data(data):
     return ';'.join([f"{key}={val}" for key, val in data.items()])
 
 
-def server_available(server):
-    """
-    test if a server is available
-    Input:
-        * server: str, a hostname/ip/url
-    Output:
-        * available: bool, True if server is available
-    """
-    netloc = urllib.parse.urlsplit(server).netloc.split(":")[0]
-    if os.system('ping  -W 1 -c 1 {0} > /dev/null 2>&1 || \
-                  ping6 -W 1 -c 1 {0} > /dev/null 2>&1'.format(netloc)) == 0:
-        return server, True
-    return server, False
+# def server_available(server):
+#     """
+#     test if a server is available
+#     Input:
+#         * server: str, a hostname/ip/url
+#     Output:
+#         * available: bool, True if server is available
+#     """
+#     netloc = urllib.parse.urlsplit(server).netloc.split(":")[0]
+#     if os.system('ping  -W 1 -c 1 {0} > /dev/null 2>&1 || \
+#                   ping6 -W 1 -c 1 {0} > /dev/null 2>&1'.format(netloc)) == 0:
+#         return server, True
+#     return server, False
 
 
-def select_server(servers=CHEMIO_SERVER_URLS):
-    """
-    give out a available server
-    Input:
-        * servers: list/str, list of servers in list or string format
-        * debug: boolean
-    Output:
-        * the best server available
-    """
-    global SERVER
-    executor = ThreadPoolExecutor(max_workers=10)
-    if SERVER is not None:
-        return SERVER
-    if isinstance(servers, str):
-        servers = servers.strip().split()
-    if len(servers) == 1:
-        return servers[0]
-    all_tasks = []
-    server_availability = OrderedDict()
-    for server in servers:
-        all_tasks.append(executor.submit(server_available, server))
-        server_availability[server] = False
-    for task in as_completed(all_tasks):
-        server, available = task.result()
-        server_availability[server] = available
-    logger.debug(f"server_availability: {server_availability}")
-    for server in servers:
-        if server_availability[server]:
-            return server
-    raise ValueError("All servers are not available")
+# def select_server(servers=CHEMIO_SERVER_URLS):
+#     """
+#     give out a available server
+#     Input:
+#         * servers: list/str, list of servers in list or string format
+#         * debug: boolean
+#     Output:
+#         * the best server available
+#     """
+#     global SERVER
+#     executor = ThreadPoolExecutor(max_workers=10)
+#     if SERVER is not None:
+#         return SERVER
+#     if isinstance(servers, str):
+#         servers = servers.strip().split()
+#     if len(servers) == 1:
+#         return servers[0]
+#     all_tasks = []
+#     server_availability = OrderedDict()
+#     for server in servers:
+#         all_tasks.append(executor.submit(server_available, server))
+#         server_availability[server] = False
+#     for task in as_completed(all_tasks):
+#         server, available = task.result()
+#         server_availability[server] = available
+#     logger.debug(f"server_availability: {server_availability}")
+#     for server in servers:
+#         if server_availability[server]:
+#             return server
+#     raise ValueError("All servers are not available")
 
 
-def get_response(method, files=None, data=None, calc_data=None):
+def get_response(files=None, data=None):
     """
     get response from server
     Input:
@@ -110,9 +109,9 @@ def get_response(method, files=None, data=None, calc_data=None):
     Output:
         * response from server as string
     """
-    assert method in ['read', 'write', 'convert']
     import requests
-    server = select_server()
+    method = 'convert'
+    # server = select_server()
     data = data or dict()
     url = server + '/' + method
     if server.endswith('/'):
@@ -193,10 +192,6 @@ def read(read_filename, index=-1, format=None, format_nocheck=False,
         os.remove(compressed_filename)
     logger.debug(f"{files}, {data}, {output}")
     output = json_tricks.loads(output)
-    # if isinstance(output, dict):
-    #     output = atomtools.types.ExtDict(output)
-    # elif isinstance(output, list):
-    #     output = [atomtools.types.ExtDict(_) for _ in output]
     return output
 
 
@@ -234,8 +229,7 @@ def get_write_content(arrays, write_filename=None, format=None, data=None, calc_
             'write_filename': write_filename,
             'write_format': format,
             'arrays': json_tricks.dumps(arrays, allow_nan=True)}
-    output = get_response('write', None, data=data,
-                          calc_data=calc_data)
+    output = get_response('write', None, data=data)
     return output
 
 
@@ -305,3 +299,28 @@ def __preview__(output):
 
 def _setdebug():
     logger.setLevel(logging.DEBUG)
+
+
+
+
+def get_stream(inputobj):
+    """
+    str:
+        filename: read
+        filecontent: StringIO wrapper
+    object:
+        atomtools.methods.get_atoms_arrays
+    dict:
+        arrays
+
+    """
+    if isinstance(inputobj, str):
+        if os.path.exists(inputobj):
+            return open(inputobj, 'r')
+        else:
+            return StringIO(inputobj)
+    elif isinstance(inputobj, bytes):
+        return BytesIO(inputobj)
+    else:
+        arrays = atomtools.methods.get_atoms_arrays(inputobj)
+        return StringIO(json_tricks.dumps(arrays, allow_nan=True))
