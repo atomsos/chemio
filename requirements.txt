@@ -1,4 +1,4 @@
-ase>=3.17.0
-atomtools>=1.8.2
-json_tricks>=3.13.1
+ase>=3.18.1
+atomtools>=1.8.4
+json_tricks>=3.13.2
 requests>=2.22.0

@@ -10,13 +10,13 @@ GSIO: IO using server
 
 import os
 import re
-import urllib.parse
 import configparser
 import gzip
-from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor, as_completed
+# from collections import OrderedDict
+# from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 import json_tricks
+from io import StringIO, BytesIO
 
 import atomtools.fileutil
 import atomtools.filetype
@@ -46,59 +46,11 @@ global SERVER
 SERVER = CHEMIO_SERVER_URLS
 
 
-def assemble_data(data):
-    assert isinstance(data, dict)
-    return ';'.join([f"{key}={val}" for key, val in data.items()])
+def assemble_data(arrays):
+    return json_tricks.dumps(arrays, allow_nan=True)
 
 
-# def server_available(server):
-#     """
-#     test if a server is available
-#     Input:
-#         * server: str, a hostname/ip/url
-#     Output:
-#         * available: bool, True if server is available
-#     """
-#     netloc = urllib.parse.urlsplit(server).netloc.split(":")[0]
-#     if os.system('ping  -W 1 -c 1 {0} > /dev/null 2>&1 || \
-#                   ping6 -W 1 -c 1 {0} > /dev/null 2>&1'.format(netloc)) == 0:
-#         return server, True
-#     return server, False
-
-
-# def select_server(servers=CHEMIO_SERVER_URLS):
-#     """
-#     give out a available server
-#     Input:
-#         * servers: list/str, list of servers in list or string format
-#         * debug: boolean
-#     Output:
-#         * the best server available
-#     """
-#     global SERVER
-#     executor = ThreadPoolExecutor(max_workers=10)
-#     if SERVER is not None:
-#         return SERVER
-#     if isinstance(servers, str):
-#         servers = servers.strip().split()
-#     if len(servers) == 1:
-#         return servers[0]
-#     all_tasks = []
-#     server_availability = OrderedDict()
-#     for server in servers:
-#         all_tasks.append(executor.submit(server_available, server))
-#         server_availability[server] = False
-#     for task in as_completed(all_tasks):
-#         server, available = task.result()
-#         server_availability[server] = available
-#     logger.debug(f"server_availability: {server_availability}")
-#     for server in servers:
-#         if server_availability[server]:
-#             return server
-#     raise ValueError("All servers are not available")
-
-
-def get_response(files=None, data=None):
+def get_response(files=None, request_data=None):
     """
     get response from server
     Input:
@@ -111,14 +63,15 @@ def get_response(files=None, data=None):
     """
     import requests
     method = 'convert'
-    # server = select_server()
-    data = data or dict()
-    url = server + '/' + method
+    server = CHEMIO_SERVER_URLS
+    logger.debug(f"server: {CHEMIO_SERVER_URLS}")
+    request_data = request_data or dict()
     if server.endswith('/'):
         url = server + method
-    data['method'] = method
-    res = requests.post(url, files=files, data=data)
-    logger.debug(f"data: {data}")
+    else:
+        url = server + '/' + method
+    res = requests.post(url, files=files, data=request_data)
+    logger.debug(f"request_data: {request_data}")
     logger.debug(f'header: {res.headers}')
     logger.debug(f'text: {res.text}')
     return res.text
@@ -182,12 +135,15 @@ def read(read_filename, index=-1, format=None, format_nocheck=False,
     data = assemble_data(data)
     calc_data = calc_data or dict()
     calc_data = assemble_data(calc_data)
-    data = {'data': data,
-            'calc_data': calc_data,
-            'read_index': index,
-            'read_format': format,
-            'read_filename': os.path.basename(read_filename)}
-    output = get_response('read', files, data)
+    request_data = {
+        'data': data,
+        'calc_data': calc_data,
+        'read_index': index,
+        'read_format': format,
+        'read_filename': os.path.basename(read_filename),
+        'write_format': 'json',
+    }
+    output = get_response(files, request_data)
     if remove_flag:
         os.remove(compressed_filename)
     logger.debug(f"{files}, {data}, {output}")
@@ -206,34 +162,26 @@ def check_multiframe(arrays, format):
 
 
 def get_write_content(arrays, write_filename=None, format=None, data=None, calc_data=None):
+    from io import StringIO
     assert format is not None, 'format cannot be none when filename is None'
-    if arrays.__class__.__module__ == 'ase.atoms':
-        calc_arrays = None
-        if arrays.calc:
-            calc_arrays = arrays.calc.parameters
-            calc_arrays.update(arrays.calc.results)
-        arrays = arrays.arrays
-        if calc_arrays:
-            arrays['calc_arrays'] = calc_arrays
-    if not check_multiframe(arrays, format):
-        logger.debug(
-            'format {0} not support list array, turns to last image'.format(format))
-        arrays = arrays[-1]
-
     data = data or dict()
     data = assemble_data(data)
     calc_data = calc_data or dict()
     calc_data = assemble_data(calc_data)
-    data = {'data': data,
-            'calc_data': calc_data,
-            'write_filename': write_filename,
-            'write_format': format,
-            'arrays': json_tricks.dumps(arrays, allow_nan=True)}
-    output = get_response('write', None, data=data)
+    request_data = {
+        'read_format': 'json',
+        'data': data,
+        'calc_data': calc_data,
+        'write_filename': write_filename,
+        'write_format': format,
+    }
+    files = {'read_file': StringIO(json_tricks.dumps(arrays, allow_nan=True))}
+    output = get_response(files=files, request_data=request_data)
     return output
 
 
-def write(arrays, write_filename=None, format=None, format_nocheck=False, data=None, calc_data=None):
+def write(arrays, write_filename=None, format=None,
+          format_nocheck=False, data=None, calc_data=None):
     if not format_nocheck:
         format = format or atomtools.filetype.filetype(write_filename)
         assert format is not None, 'We cannot determine your filetype. Supports {0}'.format(
@@ -269,13 +217,14 @@ def convert(read_filename, write_filename, index=-1,
     data = assemble_data(data)
     calc_data = calc_data or dict()
     calc_data = assemble_data(calc_data)
-    data = {'data': data,
-            'calc_data': calc_data,
-            'read_index': index,
-            'read_format': read_format,
-            'write_filename': write_filename,
-            'write_format': write_format}
-    output = get_response('convert', files, data)
+    request_data = {
+        'data': data,
+        'calc_data': calc_data,
+        'read_index': index,
+        'read_format': read_format,
+        'write_filename': write_filename,
+        'write_format': write_format}
+    output = get_response(files=files, request_data=request_data)
     if remove_flag:
         os.remove(compressed_filename)
     if write_filename == '-':
@@ -301,8 +250,6 @@ def _setdebug():
     logger.setLevel(logging.DEBUG)
 
 
-
-
 def get_stream(inputobj):
     """
     str:
@@ -317,8 +264,7 @@ def get_stream(inputobj):
     if isinstance(inputobj, str):
         if os.path.exists(inputobj):
             return open(inputobj, 'r')
-        else:
-            return StringIO(inputobj)
+        return StringIO(inputobj)
     elif isinstance(inputobj, bytes):
         return BytesIO(inputobj)
     else:
