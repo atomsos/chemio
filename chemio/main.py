@@ -103,19 +103,21 @@ def read_ase(filename, index=None, format=None,
                        parallel=parallel, **kwargs)
 
 
-def read(read_filename, index=-1, format=None, format_nocheck=False,
+def read(read_obj, index=-1, format=None, format_nocheck=False,
          data=None, calc_data=None):
     """
-    read_filename:
-        filename of the file to be read.
-    index:
-        index of the file if it contains multiple images.
-    format:
-        format of the file
-    data:
-        appended data for arrays
-    calc_data:
-        appended data for calc_arrays
+    Read read_obj with index and transform to arrays
+    Input:
+        read_obj:
+            filename/StringIO
+        index:
+            index of the file if it contains multiple images.
+        format:
+            format of the file, if read_obj is StringIO cannot be None
+        data:
+            appended data for arrays
+        calc_data:
+            appended data for calc_arrays
     """
     fname_match = re.match('^(.*)@([0-9:+-]+)$', read_filename)
     if fname_match:
@@ -184,10 +186,8 @@ def write(arrays, write_filename=None, format=None,
           format_nocheck=False, data=None, calc_data=None):
     if not format_nocheck:
         format = format or atomtools.filetype.filetype(write_filename)
-        assert format is not None, 'We cannot determine your filetype. Supports {0}'.format(
-            ' '.join(SUPPORT_WRITE_FORMATS))
-        assert format in SUPPORT_WRITE_FORMATS, 'format {0} not writeable'.format(
-            format)
+        assert format is not None, f'We cannot determine your filetype. Supports {SUPPORT_WRITE_FORMATS}'
+        assert format in SUPPORT_WRITE_FORMATS, f'format {format} not writeable'
     if write_filename in [None, '-']:
         preview(arrays, format=format, data=data,
                 calc_data=calc_data)
@@ -223,7 +223,8 @@ def convert(read_filename, write_filename, index=-1,
         'read_index': index,
         'read_format': read_format,
         'write_filename': write_filename,
-        'write_format': write_format}
+        'write_format': write_format
+    }
     output = get_response(files=files, request_data=request_data)
     if remove_flag:
         os.remove(compressed_filename)
