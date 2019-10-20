@@ -8,10 +8,7 @@ args utils are stored here.
 """
 
 
-
 import re
-
-
 
 
 def parse_args_data(args_data):
@@ -27,9 +24,3 @@ def parse_args_data(args_data):
 
     print('data:', data)
     return data
-
-
-
-
-
-

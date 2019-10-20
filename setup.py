@@ -3,6 +3,7 @@
 import os
 from setuptools import setup, find_packages
 
+
 def get_version():
     import sys
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -62,6 +63,6 @@ if __name__ == '__main__':
                 'graphviz'
             ],
         },
-        include_package_data = True,
+        include_package_data=True,
         zip_safe=False,
     )

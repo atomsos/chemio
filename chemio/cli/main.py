@@ -11,6 +11,7 @@ from chemio import __version__
 
 program = 'chemio'
 
+
 class CLIError(Exception):
     """Error for CLI commands.
 
@@ -36,7 +37,7 @@ commands = [
     ('convert', program+'.cli.convert'),
     # ('reciprocal', program+'.cli.reciprocal'),
     # ('completion', program+'.cli.completion')
-    ]
+]
 
 
 def main(prog=program, description='Chem IO command line tool.',
@@ -134,6 +135,7 @@ def main(prog=program, description='Chem IO command line tool.',
 
 class Formatter(argparse.HelpFormatter):
     """Improved help formatter."""
+
     def _fill_text(self, text, width, indent):
         assert indent == ''
         out = ''
@@ -154,5 +156,3 @@ class Formatter(argparse.HelpFormatter):
                 out += textwrap.fill(block, width=width) + '\n'
             out += '\n'
         return out[:-1]
-
-

@@ -68,10 +68,11 @@ class CLICommand:
         configs = []
         data = utils.parse_args_data(args.data)
         calc_data = utils.parse_args_data(args.calc_data)
-        import chemio, logging
+        import chemio
+        import logging
         if args.debug:
             chemio.main.logger.setLevel(logging.DEBUG)
         chemio.convert(args.input, args.output, args.image_number,
-                args.input_format, args.output_format,
-                format_nocheck=args.nocheck,
-                data=data, calc_data=calc_data)
+                       args.input_format, args.output_format,
+                       format_nocheck=args.nocheck,
+                       data=data, calc_data=calc_data)

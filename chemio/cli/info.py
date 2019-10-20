@@ -6,7 +6,7 @@ chemio info cli
 """
 import json_tricks
 from . import utils
-from atomtools.types import ExtDict
+from atomtools.ext_types import ExtDict
 
 
 # from chemio.utils import import_module, FileNotFoundError
@@ -48,7 +48,8 @@ class CLICommand:
             raise ValueError("No filename is given")
         data = utils.parse_args_data(args.data)
         calc_data = utils.parse_args_data(args.calc_data)
-        import chemio, logging
+        import chemio
+        import logging
         if args.debug:
             chemio.main.logger.setLevel(logging.DEBUG)
         for filename in args.filename:
