@@ -12,11 +12,10 @@ import os
 import re
 import configparser
 import gzip
-# from collections import OrderedDict
-# from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
-import json_tricks
 from io import StringIO, BytesIO
+import json_tricks
+import requests
 
 import atomtools.fileutil
 import atomtools.filetype
@@ -61,7 +60,6 @@ def get_response(files=None, request_data=None):
     Output:
         * response from server as string
     """
-    import requests
     method = 'convert'
     server = CHEMIO_SERVER_URLS
     logger.debug(f"server: {CHEMIO_SERVER_URLS}")
@@ -103,7 +101,7 @@ def read_ase(filename, index=None, format=None,
                        parallel=parallel, **kwargs)
 
 
-def read(read_filename, index=-1, format=None, format_nocheck=False,
+def read(read_obj, index=-1, format=None, format_nocheck=False,
          data=None, calc_data=None):
     """
     Read read_obj with index and transform to arrays
@@ -201,8 +199,13 @@ def write(arrays, write_filename=None, format=None,
 
 def convert(read_obj, write_filename, index=-1,
             read_format=None, write_format=None,
-            compress: bool = True, compress_level: int = 2,
             format_nocheck=False, data=None, calc_data=None):
+    """
+    convert any kind of structure related input(filename/filestring/Atoms/Structure) to any other kind
+    Input:
+        read_obj: filename/StringIO/Atoms/Structure
+        read_format: 
+    """
     assert os.path.exists(read_obj), '{0} not exist'.format(read_obj)
     # if not format_nocheck:
     #     read_format = read_format or atomtools.filetype.filetype(read_obj)
@@ -218,12 +221,12 @@ def convert(read_obj, write_filename, index=-1,
     calc_data = calc_data or dict()
     calc_data = assemble_data(calc_data)
     request_data = {
-        'data': data,
-        'calc_data': calc_data,
         'read_index': index,
         'read_format': read_format,
         'write_filename': write_filename,
-        'write_format': write_format
+        'write_format': write_format,
+        'data': data,
+        'calc_data': calc_data,
     }
     output = get_response(files=files, request_data=request_data)
     if remove_flag:
@@ -251,23 +254,88 @@ def _setdebug():
     logger.setLevel(logging.DEBUG)
 
 
-def get_stream(inputobj):
+def parse_input_obj(inputobj):
     """
-    str:
-        filename: read
-        filecontent: StringIO wrapper
-    object:
-        atomtools.methods.get_atoms_arrays
-    dict:
-        arrays
-
+    parse inputobj to a bytes object
+    Input:
+        inputobj: filename/filestring/StringIO/BytesIO/Atoms/Structure
+    Output:
+        raw(bytes), filename(str), compressed(bool)
     """
+    filename = None
+    compressed = False
     if isinstance(inputobj, str):
         if os.path.exists(inputobj):
-            return open(inputobj, 'r')
-        return StringIO(inputobj)
+            filename = os.path.basename(inputobj)
+            compressed = filename.endswith('.gz')
+            if compressed:
+                filename = filename[:-len('.gz')]
+            return open(inputobj, 'rb').read(), filename, compressed
+        else:
+            return inputobj.encode(), filename, compressed
     elif isinstance(inputobj, bytes):
-        return BytesIO(inputobj)
+        return inputobj, filename, compressed
+    elif isinstance(inputobj, (StringIO, BytesIO)):
+        raw = inputobj.read()
+        if isinstance(raw, str):
+            raw = raw.encode()
+        return raw, filename, compressed
     else:
         arrays = atomtools.methods.get_atoms_arrays(inputobj)
-        return StringIO(json_tricks.dumps(arrays, allow_nan=True))
+        filename = 'Atoms.json'
+        return json_tricks.dumps(arrays, allow_nan=True).encode(), filename, compressed
+
+
+class ChemioReadError(Exception):
+    pass
+
+
+def base_convert(read_obj, read_index: int = -1, read_format=None,
+                 write_filename=None, write_format=None,
+                 compress: bool = True, compresslevel: int = 1,
+                 data=None, calc_data=None):
+    """
+    base convert: convert anything from one type to another
+    Input:
+        read_obj: filename/StringIO/Atoms/Structure like
+        read_index: int, which frame to read
+        read_format: format of object
+        write_filename: used for generating output
+        write_format: what type to write
+        compress: if compress the file, default True, but force to False if the file has been compress
+        compresslevel: int, level of compression
+        data: dict, extra data written to arrays
+        calc_data: dict, extra data write to calc_arrays
+    Output:
+        string: transformed structure from read_format to write_format
+    """
+    import pdb; pdb.set_trace()
+    rawbytes, read_filename, compressed = parse_input_obj(read_obj)
+    if not compressed and compress and len(rawbytes) > 8 * 1024:
+        rawbytes = gzip.compress(rawbytes, compresslevel)
+        compressed = True
+    if read_filename is None:
+        assert read_format is not None
+    files = {
+        'read_file': (read_filename, BytesIO(rawbytes)),
+    }
+    data = data or dict()
+    calc_data = calc_data or dict()
+    payload = {
+        'read_index': read_index,
+        'read_format': read_format,
+        'write_format': write_format,
+        'write_filename': write_filename,
+        'compressed': compressed,
+        'data': json_tricks.dumps(data, allow_nan=True),
+        'calc_data': json_tricks.dumps(calc_data, allow_nan=True),
+    }
+    url = os.environ.get("CHEMIO_SERVER_URLS", "https://io.autochemistry.com")
+    if not url.endswith('/'):
+        url += '/'
+    url += 'convert'
+    response = requests.post(url, files=files, data=payload, timeout=2)
+    result = response.json()
+    if result['success']:
+        return result['data']
+    raise ChemioReadError(result['message'])
