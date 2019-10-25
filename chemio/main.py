@@ -103,7 +103,7 @@ def read_ase(filename, index=None, format=None,
                        parallel=parallel, **kwargs)
 
 
-def read(read_obj, index=-1, format=None, format_nocheck=False,
+def read(read_filename, index=-1, format=None, format_nocheck=False,
          data=None, calc_data=None):
     """
     Read read_obj with index and transform to arrays
