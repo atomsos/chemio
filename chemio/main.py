@@ -119,19 +119,19 @@ def read(read_obj, index=-1, format=None, format_nocheck=False,
         calc_data:
             appended data for calc_arrays
     """
-    fname_match = re.match('^(.*)@([0-9:+-]+)$', read_filename)
+    fname_match = re.match('^(.*)@([0-9:+-]+)$', read_obj)
     if fname_match:
-        read_filename, index = fname_match[1], fname_match[2]
-    assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
+        read_obj, index = fname_match[1], fname_match[2]
+    assert os.path.exists(read_obj), '{0} not exist'.format(read_obj)
     assert isinstance(index, int) or \
         isinstance(index, str) and \
         re.match('^[+-:0-9]$', index), '{0} is not a int or :'.format(index)
     if not format_nocheck:
-        format = format or atomtools.filetype.filetype(read_filename)
+        format = format or atomtools.filetype.filetype(read_obj)
     if format is None:
         raise NotImplementedError(
             'format cannot be parsed, please check filetype')
-    compressed_filename, remove_flag = get_compressed_file(read_filename)
+    compressed_filename, remove_flag = get_compressed_file(read_obj)
     files = {'read_file': open(compressed_filename, 'rb')}
     data = data or dict()
     data = assemble_data(data)
@@ -142,7 +142,7 @@ def read(read_obj, index=-1, format=None, format_nocheck=False,
         'calc_data': calc_data,
         'read_index': index,
         'read_format': format,
-        'read_filename': os.path.basename(read_filename),
+        'read_obj': os.path.basename(read_obj),
         'write_format': 'json',
     }
     output = get_response(files, request_data)
@@ -199,19 +199,19 @@ def write(arrays, write_filename=None, format=None,
             fd.write(output)
 
 
-def convert(read_filename, write_filename, index=-1,
+def convert(read_obj, write_filename, index=-1,
             read_format=None, write_format=None,
+            compress: bool = True, compress_level: int = 2,
             format_nocheck=False, data=None, calc_data=None):
-    assert os.path.exists(read_filename), '{0} not exist'.format(read_filename)
-    if not format_nocheck:
-        read_format = read_format or atomtools.filetype.filetype(read_filename)
-        assert read_format is not None, \
-            'We cannot determine your filetype of file: {0}'.format(
-                read_filename)
+    assert os.path.exists(read_obj), '{0} not exist'.format(read_obj)
+    # if not format_nocheck:
+    #     read_format = read_format or atomtools.filetype.filetype(read_obj)
+    #     assert read_format is not None, \
+    #         'We cannot determine your filetype of file: {0}'.format(read_obj)
     write_format = write_format or atomtools.filetype.filetype(write_filename)
     assert write_format is not None, \
         'We cannot determine your filetype of file: {0}'.format(write_filename)
-    compressed_filename, remove_flag = get_compressed_file(read_filename)
+    compressed_filename, remove_flag = get_compressed_file(read_obj)
     files = {'read_file': open(compressed_filename, 'rb')}
     data = data or dict()
     data = assemble_data(data)
