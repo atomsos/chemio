@@ -22,5 +22,5 @@ def parse_args_data(args_data):
             else:
                 raise ValueError("args data: d not a=b format")
 
-    print('data:', data)
+    # print('data:', data)
     return data

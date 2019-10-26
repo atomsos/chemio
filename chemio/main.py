@@ -42,75 +42,16 @@ logger.debug(f"CHEMIO_SERVER_URL: {CHEMIO_SERVER_URL}")
 
 def read_ase(filename, index=None, format=None,
              parallel=True, **kwargs):
+    """
+    read ase type data
+    """
     import ase.io
     return ase.io.read(filename, index=index, format=format,
                        parallel=parallel, **kwargs)
 
 
-def read(read_obj, index=-1, format=None, data=None, calc_data=None):
-    """
-    Read read_obj with index and transform to arrays
-    Input:
-        read_obj: filename/StringIO
-        index: index of the file if it contains multiple images.
-        format: format of the file, if read_obj is StringIO cannot be None
-        data: appended data for arrays
-        calc_data: appended data for calc_arrays
-    Output:
-        dict: result of parsed read_obj
-    """
-    if isinstance(read_obj, str):
-        fname_match = re.match('^(.*)@([0-9:+-]+)$', read_obj)
-        if fname_match and os.path.isfile(fname_match.group[1]):
-            read_obj, index = fname_match[1], fname_match[2]
-    output = base_convert(read_obj, read_index=index, write_format='json')
-    output = json_tricks.loads(output)
-    return output
-
-
-def check_multiframe(arrays, format):
-    assert format in atomtools.filetype.list_supported_formats(), \
-        '{0} not in {1}'.format(
-            format, atomtools.filetype.list_supported_formats())
-    if isinstance(arrays, dict) or isinstance(arrays, list)\
-            and atomtools.filetype.support_multiframe(format):
-        return True
-    return False
-
-
-def write(arrays, write_filename, format=None, index=-1,
-          data=None, calc_data=None):
-    output = base_convert(arrays, index, 'json', write_filename, format)
-    if write_filename in [None, '-']:
-        print('-'*10 + ' chemio preview ' + '-'*10)
-        print(output)
-        print('-'*10 + ' chemio preview ' + '-'*10)
-    else:
-        with open(write_filename, 'w') as fd:
-            fd.write(output)
-
-
-def convert(read_obj, write_filename, index=-1,
-            read_format=None, write_format=None,
-            data=None, calc_data=None):
-    """
-    convert any kind of structure related input(filename/filestring/Atoms/Structure) to any other kind
-    Input:
-        read_obj: filename/StringIO/Atoms/Structure
-        read_format: 
-    """
-    output = base_convert(read_obj, read_index, read_format,
-                          write_filename, write_format)
-    with open(write_filename, 'w') as fd:
-        fd.write(output)
-
-
-def preview(arrays, format='xyz', data=None, calc_data=None):
-    write(arrays, None, format, data, calc_data)
-
-
-def _setdebug():
-    logger.setLevel(logging.DEBUG)
+class ChemioReadError(Exception):
+    pass
 
 
 def parse_input_obj(inputobj):
@@ -130,8 +71,7 @@ def parse_input_obj(inputobj):
             if compressed:
                 filename = filename[:-len('.gz')]
             return open(inputobj, 'rb').read(), filename, compressed
-        else:
-            return inputobj.encode(), filename, compressed
+        return inputobj.encode(), filename, compressed
     elif isinstance(inputobj, bytes):
         return inputobj, filename, compressed
     elif isinstance(inputobj, (StringIO, BytesIO)):
@@ -143,10 +83,6 @@ def parse_input_obj(inputobj):
         arrays = atomtools.methods.get_atoms_arrays(inputobj)
         filename = 'Atoms.json'
         return json_tricks.dumps(arrays, allow_nan=True).encode(), filename, compressed
-
-
-class ChemioReadError(Exception):
-    pass
 
 
 def base_convert(read_obj, read_index: int = -1, read_format=None,
@@ -161,7 +97,7 @@ def base_convert(read_obj, read_index: int = -1, read_format=None,
         read_format: format of object
         write_filename: used for generating output
         write_format: what type to write
-        compress: if compress the file, default True, but force to False if the file has been compress
+        compress: whether to compress the file, default True
         compresslevel: int, level of compression
         data: dict, extra data written to arrays
         calc_data: dict, extra data write to calc_arrays
@@ -187,11 +123,94 @@ def base_convert(read_obj, read_index: int = -1, read_format=None,
         'data': json_tricks.dumps(data, allow_nan=True),
         'calc_data': json_tricks.dumps(calc_data, allow_nan=True),
     }
-    url = os.environ.get("CHEMIO_SERVER_URL",
-                         "https://io.autochemistry.com/convert")
+    default_url = "https://io.autochemistry.com/convert"
+    url = os.environ.get("CHEMIO_SERVER_URL", default_url)
     logger.debug(f"url: {url}, files: {files}, payload: {payload}")
-    response = requests.post(url, files=files, data=payload, timeout=2)
+    response = requests.post(url, files=files, data=payload)
     result = response.json()
     if result['success']:
         return result['data']
     raise ChemioReadError(result['message'])
+
+
+def read(read_obj, index=-1, format=None, data=None, calc_data=None):
+    """
+    Read read_obj with index and transform to arrays
+    Input:
+        read_obj: filename/StringIO
+        index: index of the file if it contains multiple images.
+        format: format of the file, if read_obj is StringIO cannot be None
+        data: appended data for arrays
+        calc_data: appended data for calc_arrays
+    Output:
+        dict: result of parsed read_obj
+    """
+    if isinstance(read_obj, str):
+        fname_match = re.match('^(.*)@([0-9:+-]+)$', read_obj)
+        if fname_match and os.path.isfile(fname_match.group[1]):
+            read_obj, index = fname_match[1], fname_match[2]
+    output = base_convert(read_obj, read_index=index, read_format=format,
+                          write_format='json', data=data, calc_data=calc_data)
+    output = json_tricks.loads(output)
+    return output
+
+
+def check_multiframe(arrays, format):
+    assert format in atomtools.filetype.list_supported_formats(), \
+        '{0} not in {1}'.format(
+            format, atomtools.filetype.list_supported_formats())
+    if isinstance(arrays, dict) or isinstance(arrays, list)\
+            and atomtools.filetype.support_multiframe(format):
+        return True
+    return False
+
+
+def write(arrays, write_filename, format=None, index=-1,
+          data=None, calc_data=None):
+    output = base_convert(arrays, index, 'json', write_filename,
+                          format, data=data, calc_data=calc_data)
+    if write_filename in [None, '-']:
+        preview_output(output)
+    else:
+        with open(write_filename, 'w') as fd:
+            fd.write(output)
+
+
+def convert(read_obj, write_filename, index=-1,
+            read_format=None, write_format=None,
+            data=None, calc_data=None):
+    """
+    convert any kind of structure related input
+        (filename/filestring/Atoms/Structure) to any other kind
+    Input:
+        read_obj: filename/StringIO/Atoms/Structure
+        write_filename: filename/None
+        index: index of the frame of read_obj
+        read_format: format of read_obj
+        write_format: format of write_obj
+        data: dict, extra data to be posted as arrays
+        calc_data: dict, extra data to be posted as calc_arrays
+    Output:
+        None
+    """
+    output = base_convert(read_obj, index, read_format,
+                          write_filename, write_format,
+                          data=data, calc_data=calc_data)
+    if write_filename in [None, '-']:
+        preview_output(output)
+    with open(write_filename, 'w') as fd:
+        fd.write(output)
+
+
+def preview(arrays, format='xyz', data=None, calc_data=None):
+    write(arrays, None, format, data, calc_data)
+
+
+def preview_output(output):
+    print('-'*10 + ' chemio preview start' + '-'*10)
+    print(output)
+    print('-'*10 + ' chemio preview end  ' + '-'*10)
+
+
+def _setdebug():
+    logger.setLevel(logging.DEBUG)

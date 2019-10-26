@@ -39,6 +39,7 @@ test:
 	make test_ase
 	make test_read
 	make test_write
+	make test_cli
 	coverage report -m
 
 
@@ -52,6 +53,10 @@ test_read:
 
 test_write:
 	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py --write"
+
+
+test_cli:
+	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test_cli.py --write"
 
 
 test_travis:
