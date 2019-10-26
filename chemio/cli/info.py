@@ -37,6 +37,8 @@ class CLICommand:
             help='Show more information about files.')
         add('-k', '--key',
             help='key to show')
+        add('--compresslevel', default=1, type=int,
+            help='compression level, 0 to shutdown')
         add('-d', '--data', nargs='*',
             help='data to be posted, key=val format')
         add('--calc_data', nargs='*',
@@ -54,7 +56,7 @@ class CLICommand:
             chemio.main.logger.setLevel(logging.DEBUG)
         for filename in args.filename:
             arrays = chemio.read(filename, index=args.index,
-                                 format_nocheck=args.nocheck,
+                                 compresslevel=args.compresslevel,
                                  data=data, calc_data=calc_data)
             if args.verbose:
                 print(arrays)

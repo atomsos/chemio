@@ -31,6 +31,8 @@ class CLICommand:
             help='Specify output FORMAT')
         add('-f', '--force', action='store_true',
             help='Overwrite an existing file')
+        add('--compresslevel', default=1, type=int,
+            help='compression level, 0 to shutdown')
         add('-n', '--image-number',
             default=':', metavar='NUMBER',
             help='Pick images from trajectory.  NUMBER can be a '
@@ -73,5 +75,6 @@ class CLICommand:
             chemio.main.logger.setLevel(logging.DEBUG)
         chemio.convert(args.input, args.output, args.image_number,
                        args.input_format, args.output_format,
-                       format_nocheck=args.nocheck,
-                       data=data, calc_data=calc_data)
+                       data=data, calc_data=calc_data,
+                       compresslevel=args.compresslevel,
+                       )

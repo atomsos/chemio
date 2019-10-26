@@ -87,8 +87,9 @@ def parse_input_obj(inputobj):
 
 def base_convert(read_obj, read_index: int = -1, read_format=None,
                  write_filename=None, write_format=None,
+                 data=None, calc_data=None,
                  compress: bool = True, compresslevel: int = 1,
-                 data=None, calc_data=None):
+                 ):
     """
     base convert: convert anything from one type to another
     Input:
@@ -97,14 +98,16 @@ def base_convert(read_obj, read_index: int = -1, read_format=None,
         read_format: format of object
         write_filename: used for generating output
         write_format: what type to write
-        compress: whether to compress the file, default True
-        compresslevel: int, level of compression
         data: dict, extra data written to arrays
         calc_data: dict, extra data write to calc_arrays
+        compress: whether to compress the file, default True
+        compresslevel: int, level of compress
     Output:
         string: transformed structure from read_format to write_format
     """
     rawbytes, read_filename, compressed = parse_input_obj(read_obj)
+    if compresslevel == 0:
+        compress = False
     if not compressed and compress and len(rawbytes) > 8 * 1024:
         rawbytes = gzip.compress(rawbytes, compresslevel)
         compressed = True
@@ -133,7 +136,10 @@ def base_convert(read_obj, read_index: int = -1, read_format=None,
     raise ChemioReadError(result['message'])
 
 
-def read(read_obj, index=-1, format=None, data=None, calc_data=None):
+def read(read_obj, index=-1, format=None,
+         data=None, calc_data=None,
+         compress: bool = True, compresslevel: int = 1,
+         ):
     """
     Read read_obj with index and transform to arrays
     Input:
@@ -150,12 +156,17 @@ def read(read_obj, index=-1, format=None, data=None, calc_data=None):
         if fname_match and os.path.isfile(fname_match.group[1]):
             read_obj, index = fname_match[1], fname_match[2]
     output = base_convert(read_obj, read_index=index, read_format=format,
-                          write_format='json', data=data, calc_data=calc_data)
+                          write_format='json', data=data, calc_data=calc_data,
+                          compress=compress, compresslevel=compresslevel,
+                          )
     output = json_tricks.loads(output)
     return output
 
 
 def check_multiframe(arrays, format):
+    """
+    check if multiple frame is supported
+    """
     assert format in atomtools.filetype.list_supported_formats(), \
         '{0} not in {1}'.format(
             format, atomtools.filetype.list_supported_formats())
@@ -166,11 +177,26 @@ def check_multiframe(arrays, format):
 
 
 def write(arrays, write_filename, format=None, index=-1,
-          data=None, calc_data=None):
-    output = base_convert(arrays, index, 'json', write_filename,
-                          format, data=data, calc_data=calc_data)
+          data=None, calc_data=None,
+          compress: bool = True, compresslevel: int = 1,
+          ):
+    """
+    write an array to specific format
+    Input:
+        arrays: dict/list, Atoms like dict
+        write_filename: filename to write, None/- means to stdout
+        format: None/str, format to write
+        index: int, index of frame to write
+        data/calc_data
+        compress/compresslevel
+    Output:
+        None
+    """
+    output = base_convert(arrays, index, 'json', write_filename, format,
+                          data=data, calc_data=calc_data,
+                          compress=compress, compresslevel=compresslevel)
     if write_filename in [None, '-']:
-        preview_output(output)
+        __preview_output__(output)
     else:
         with open(write_filename, 'w') as fd:
             fd.write(output)
@@ -178,7 +204,9 @@ def write(arrays, write_filename, format=None, index=-1,
 
 def convert(read_obj, write_filename, index=-1,
             read_format=None, write_format=None,
-            data=None, calc_data=None):
+            data=None, calc_data=None,
+            compress: bool = True, compresslevel: int = 1,
+            ):
     """
     convert any kind of structure related input
         (filename/filestring/Atoms/Structure) to any other kind
@@ -195,18 +223,25 @@ def convert(read_obj, write_filename, index=-1,
     """
     output = base_convert(read_obj, index, read_format,
                           write_filename, write_format,
-                          data=data, calc_data=calc_data)
+                          data=data, calc_data=calc_data,
+                          compress=compress, compresslevel=compresslevel)
     if write_filename in [None, '-']:
-        preview_output(output)
+        __preview_output__(output)
     with open(write_filename, 'w') as fd:
         fd.write(output)
 
 
 def preview(arrays, format='xyz', data=None, calc_data=None):
+    """
+    preview
+    """
     write(arrays, None, format, data, calc_data)
 
 
-def preview_output(output):
+def __preview_output__(output):
+    """
+    preview output
+    """
     print('-'*10 + ' chemio preview start' + '-'*10)
     print(output)
     print('-'*10 + ' chemio preview end  ' + '-'*10)

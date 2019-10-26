@@ -4,7 +4,7 @@ CHEMIO
 
 from .main import read, write, preview, convert
 
-__version__ = '1.6.3'
+__version__ = '1.6.4'
 
 
 def version():
