@@ -36,6 +36,7 @@ test:
 	# coverage run --source $(Project) `which $(Project)` -h
 	# coverage run --source $(Project) `which $(Project)` LISTSUBCOMMAND
 	# coverage run --source $(Project) `which $(Project)` LISTSUBCOMMAND | xargs -n 1 -I [] bash -c '(coverage run --source $(Project) `which $(Project)` [] -h >/dev/null 2>&1 || echo ERROR: [])'
+	ping6 -c1 -W5 io.autochemistry.com
 	make test_ase
 	make test_read
 	make test_write
