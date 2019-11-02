@@ -3,7 +3,6 @@ from __future__ import print_function
 import argparse
 import sys
 import textwrap
-import logging
 from importlib import import_module
 
 from chemio import __version__
@@ -98,9 +97,6 @@ def main(prog=program, description='Chem IO command line tool.',
         # from cProfile import Profile
         # prof = Profile()
         # prof.enable()
-    # if args.debug:
-    #     import pdb; pdb.set_trace()
-    #     chemio.main.logger.setLevel(logging.DEBUG)
     if args.command == 'help':
         if args.helpcommand is None:
             parser.print_help()

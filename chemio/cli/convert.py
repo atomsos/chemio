@@ -66,13 +66,12 @@ class CLICommand:
     @staticmethod
     def run(args, parser):
         import chemio
-        import logging
         if args.verbose:
             print(', '.join(args.input), '->', args.output)
         data = utils.parse_args_data(args.data)
         calc_data = utils.parse_args_data(args.calc_data)
         if args.debug:
-            chemio.main.logger.setLevel(logging.DEBUG)
+            chemio.set_loglevel('debug')
         chemio.convert(args.input, args.output, args.image_number,
                        args.input_format, args.output_format,
                        data=data, calc_data=calc_data,

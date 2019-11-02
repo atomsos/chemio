@@ -9,14 +9,6 @@ from . import utils
 from atomtools.ext_types import ExtDict
 
 
-# from chemio.utils import import_module, FileNotFoundError
-# from chemio.utils import search_current_git_hash
-# from chemio.io.formats import filetype, all_formats, UnknownFileTypeError
-# from chemio.io.ulm import print_ulm_info
-# from chemio.io.bundletrajectory import print_bundletrajectory_info
-# from chemio.io.formats import all_formats as fmts
-
-
 class CLICommand:
     """Print information about files or system.
 
@@ -51,9 +43,8 @@ class CLICommand:
         data = utils.parse_args_data(args.data)
         calc_data = utils.parse_args_data(args.calc_data)
         import chemio
-        import logging
         if args.debug:
-            chemio.main.logger.setLevel(logging.DEBUG)
+            chemio.set_loglevel('debug')
         for filename in args.filename:
             arrays = chemio.read(filename, index=args.index,
                                  compresslevel=args.compresslevel,

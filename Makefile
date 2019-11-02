@@ -44,19 +44,19 @@ test:
 
 
 test_ase:
-	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py --ase"
+	bash -c "export CHEMIO_LOGLEVEL=debug; export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py --ase"
 
 
 test_read:
-	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py --read"
+	bash -c "export CHEMIO_LOGLEVEL=debug; export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py --read"
 
 
 test_write:
-	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py --write"
+	bash -c "export CHEMIO_LOGLEVEL=debug; export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test.py --write"
 
 
 test_cli:
-	bash -c "export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test_cli.py --write"
+	bash -c "export CHEMIO_LOGLEVEL=debug; export PYTHONPATH="$(PYTHONPATH):$(PWD)"; coverage run --source $(Project) ./tests/test_cli.py --write"
 
 
 test_travis:

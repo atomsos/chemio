@@ -11,7 +11,7 @@ GSIO: IO using server
 import os
 import random
 import configparser
-import logging
+import modlog
 import tempfile
 
 import argparse
@@ -20,11 +20,8 @@ import ase.build
 import chemio
 
 
-chemio._setdebug()
 
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger = modlog.getLogger(__name__)
 
 
 BASEDIR = os.path.dirname(os.path.abspath(__file__))

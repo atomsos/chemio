@@ -12,8 +12,8 @@ import os
 import re
 import configparser
 import gzip
-import logging
 from io import StringIO, BytesIO
+import modlog
 import json_tricks
 import requests
 
@@ -21,9 +21,7 @@ import atomtools.fileutil
 import atomtools.filetype
 import atomtools.methods
 
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger = modlog.getLogger(__name__)
 
 BASEDIR = os.path.dirname(os.path.abspath(__file__))
 CONFIGFILE = os.path.join(BASEDIR, 'config.conf')
@@ -40,6 +38,10 @@ CHEMIO_SERVER_URL = os.environ.get(
 logger.debug(f"CHEMIO_SERVER_URL: {CHEMIO_SERVER_URL}")
 
 
+class ChemioReadError(Exception):
+    pass
+
+
 def read_ase(filename, index=None, format=None,
              parallel=True, **kwargs):
     """
@@ -48,10 +50,6 @@ def read_ase(filename, index=None, format=None,
     import ase.io
     return ase.io.read(filename, index=index, format=format,
                        parallel=parallel, **kwargs)
-
-
-class ChemioReadError(Exception):
-    pass
 
 
 def parse_input_obj(inputobj):
@@ -131,6 +129,7 @@ def base_convert(read_obj, read_index: int = -1, read_format=None,
     logger.debug(f"url: {url}, files: {files}, payload: {payload}")
     response = requests.post(url, files=files, data=payload)
     result = response.json()
+    logger.debug(f"result: {result}")
     if result['success']:
         return result['data']
     raise ChemioReadError(result['message'])
@@ -245,7 +244,3 @@ def __preview_output__(output):
     print('-'*10 + ' chemio preview start' + '-'*10)
     print(output)
     print('-'*10 + ' chemio preview end  ' + '-'*10)
-
-
-def _setdebug():
-    logger.setLevel(logging.DEBUG)
