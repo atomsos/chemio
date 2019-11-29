@@ -1,5 +1,5 @@
 ase>=3.18.1
-atomtools>=1.8.7
+atomtools>=1.8.9
 json_tricks>=3.13.4
 modlog>=0.0.2
 requests>=2.22.0
