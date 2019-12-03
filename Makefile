@@ -23,8 +23,7 @@ reqs:
 
 build:
 	rm -rf build/ sdist/ dist/ $(Project)-*/ $(Project).egg-info/
-	python setup.py sdist build
-	python setup.py bdist_wheel --universal
+	python setup.py bdist_wheel
 	twine check dist/*
 
 install:

@@ -1,0 +1,13 @@
+abinit
+adf
+cp2k
+gaussian
+gromacs
+INCAR
+nwchem
+orca
+POSCAR
+POTCAR
+vasp
+xyz
+json

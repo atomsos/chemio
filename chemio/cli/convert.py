@@ -7,6 +7,8 @@ cli for convert
 """
 
 
+import textwrap
+from chemio.supported_writetypes import get_supported_writetypes
 from . import utils
 
 
@@ -19,6 +21,7 @@ class CLICommand:
 
     @staticmethod
     def add_arguments(parser):
+        typeslines = '\033[31m' + '\n'.join(get_supported_writetypes()) + '\033[0m'
         add = parser.add_argument
         add('-v', '--verbose', action='store_true',
             help='Print names of converted files')
@@ -28,7 +31,7 @@ class CLICommand:
             help='Specify input FORMAT')
         add('output', metavar='output-file')
         add('-o', '--output-format', metavar='FORMAT',
-            help='Specify output FORMAT')
+            help=typeslines)
         add('-f', '--force', action='store_true',
             help='Overwrite an existing file')
         add('--compresslevel', default=1, type=int,
