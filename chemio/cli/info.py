@@ -35,6 +35,8 @@ class CLICommand:
             help='data to be posted, key=val format')
         add('--calc_data', nargs='*',
             help='calc data to be posted, key=val format')
+        add('--no_show_filename', action='store_true',
+            help='do not show filename')
 
     @staticmethod
     def run(args):
@@ -52,9 +54,13 @@ class CLICommand:
             if args.verbose:
                 print(arrays)
             if args.key:
-                print(filename)
+                # print(filename)
                 try:
-                    print(ExtDict(arrays)[args.key])
+                    data = ExtDict(arrays)[args.key]
+                    if args.no_show_filename:
+                        print(data)
+                    else:
+                        print(filename, data)
                 except:
                     print(None)
             else:

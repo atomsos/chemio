@@ -8,7 +8,7 @@ from . import main
 from .main import read, write, preview, convert
 from .molecule import get_molecule
 
-__version__ = '1.6.6'
+__version__ = '1.6.8'
 LOGLEVEL_ENV = "CHEMIO_LOGLEVEL"
 
 
