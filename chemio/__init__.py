@@ -16,7 +16,6 @@ try:
     # print(ImportWarning(__string__))
     warnings.warn(__string__)
 except Exception as e:
-    print("error", e)
     from . import main
     from .main import read, write, preview, convert
     from .molecule import get_molecule

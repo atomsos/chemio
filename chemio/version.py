@@ -1,4 +1,4 @@
-__version__ = '1.6.9'
+__version__ = '2.0.0'
 LOGLEVEL_ENV = "CHEMIO_LOGLEVEL"
 
 
